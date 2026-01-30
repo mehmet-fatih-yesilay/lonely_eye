@@ -143,7 +143,7 @@ function toggleFollow(userId, buttonElement) {
     const action = isFollowing ? 'unfollow' : 'follow';
 
     // Send AJAX request
-    fetch('ajax/follow.php', {
+    fetch('/lonely_eye/api/follow.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

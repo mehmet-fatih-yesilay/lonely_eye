@@ -299,7 +299,7 @@ require_once 'includes/header.php';
 
 <!-- Main Content -->
 <div class="main-content">
-    
+
     <!-- Header -->
     <div class="discover-header">
         <h1>
@@ -319,137 +319,137 @@ require_once 'includes/header.php';
 
     <!-- Users Grid -->
     <?php if (empty($users)): ?>
-            <div class="empty-state">
-                <i class="fas fa-user-friends"></i>
-                <h3>Henüz Başka Kullanıcı Yok</h3>
-                <p>İlk kullanıcılardan birisin! Arkadaşlarını davet et.</p>
-            </div>
+        <div class="empty-state">
+            <i class="fas fa-user-friends"></i>
+            <h3>Henüz Başka Kullanıcı Yok</h3>
+            <p>İlk kullanıcılardan birisin! Arkadaşlarını davet et.</p>
+        </div>
     <?php else: ?>
-            <div class="users-grid" id="usersGrid">
-                <?php foreach ($users as $user): ?>
-                        <div class="user-card" data-username="<?php echo htmlspecialchars($user['username']); ?>">
-                            <!-- Avatar -->
-                            <div class="user-avatar">
-                                <?php if (!empty($user['avatar']) && file_exists($user['avatar'])): ?>
-                                        <img src="<?php echo htmlspecialchars($user['avatar']); ?>" 
-                                             alt="<?php echo htmlspecialchars($user['username']); ?>">
-                                <?php else: ?>
-                                        <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
-                                <?php endif; ?>
-                            </div>
+        <div class="users-grid" id="usersGrid">
+            <?php foreach ($users as $user): ?>
+                <div class="user-card" data-username="<?php echo htmlspecialchars($user['username']); ?>">
+                    <!-- Avatar -->
+                    <div class="user-avatar">
+                        <?php if (!empty($user['avatar']) && file_exists($user['avatar'])): ?>
+                            <img src="<?php echo htmlspecialchars($user['avatar']); ?>"
+                                alt="<?php echo htmlspecialchars($user['username']); ?>">
+                        <?php else: ?>
+                            <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
+                        <?php endif; ?>
+                    </div>
 
-                            <!-- User Info -->
-                            <h3 class="user-name">
-                                <?php echo htmlspecialchars($user['username']); ?>
-                            </h3>
-                            <div class="user-title">
-                                <i class="fas fa-award" style="color: #FFD700;"></i>
-                                <?php echo getUserTitle($user['follower_count']); ?>
-                            </div>
+                    <!-- User Info -->
+                    <h3 class="user-name">
+                        <?php echo htmlspecialchars($user['username']); ?>
+                    </h3>
+                    <div class="user-title">
+                        <i class="fas fa-award" style="color: #FFD700;"></i>
+                        <?php echo getUserTitle($user['follower_count']); ?>
+                    </div>
 
-                            <!-- Stats -->
-                            <div class="user-stats">
-                                <div class="user-stat">
-                                    <span class="user-stat-value"><?php echo $user['follower_count']; ?></span>
-                                    <span class="user-stat-label">Takipçi</span>
-                                </div>
-                                <div class="user-stat">
-                                    <span class="user-stat-value"><?php echo $user['following_count']; ?></span>
-                                    <span class="user-stat-label">Takip</span>
-                                </div>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="user-actions">
-                                <button class="btn btn-primary btn-follow <?php echo $user['is_following'] ? 'following' : ''; ?>" 
-                                        onclick="toggleFollow(<?php echo $user['id']; ?>, this)">
-                                    <?php if ($user['is_following']): ?>
-                                            <i class="fas fa-user-check"></i>
-                                            Takip Ediliyor
-                                    <?php else: ?>
-                                            <i class="fas fa-user-plus"></i>
-                                            Takip Et
-                                    <?php endif; ?>
-                                </button>
-                                <a href="profile.php?id=<?php echo $user['id']; ?>" class="btn-profile" title="Profili Görüntüle">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
+                    <!-- Stats -->
+                    <div class="user-stats">
+                        <div class="user-stat">
+                            <span class="user-stat-value"><?php echo $user['follower_count']; ?></span>
+                            <span class="user-stat-label">Takipçi</span>
                         </div>
-                <?php endforeach; ?>
-            </div>
+                        <div class="user-stat">
+                            <span class="user-stat-value"><?php echo $user['following_count']; ?></span>
+                            <span class="user-stat-label">Takip</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="user-actions">
+                        <button class="btn btn-primary btn-follow <?php echo $user['is_following'] ? 'following' : ''; ?>"
+                            onclick="toggleFollow(<?php echo $user['id']; ?>, this)">
+                            <?php if ($user['is_following']): ?>
+                                <i class="fas fa-user-check"></i>
+                                Takip Ediliyor
+                            <?php else: ?>
+                                <i class="fas fa-user-plus"></i>
+                                Takip Et
+                            <?php endif; ?>
+                        </button>
+                        <a href="profile.php?id=<?php echo $user['id']; ?>" class="btn-profile" title="Profili Görüntüle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 
 </div>
 
 <script>
-// Live Search Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('userSearch');
-    const usersGrid = document.getElementById('usersGrid');
-    
-    if (searchInput && usersGrid) {
-        const userCards = usersGrid.querySelectorAll('.user-card');
+    // Live Search Functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('userSearch');
+        const usersGrid = document.getElementById('usersGrid');
 
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
+        if (searchInput && usersGrid) {
+            const userCards = usersGrid.querySelectorAll('.user-card');
 
-            userCards.forEach(card => {
-                const username = card.getAttribute('data-username').toLowerCase();
-                
-                if (username.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase().trim();
+
+                userCards.forEach(card => {
+                    const username = card.getAttribute('data-username').toLowerCase();
+
+                    if (username.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
             });
-        });
-    }
-});
-
-// Follow/Unfollow Function (Already defined in script.js, but adding inline for safety)
-function toggleFollow(userId, buttonElement) {
-    const isFollowing = buttonElement.classList.contains('following');
-    const action = isFollowing ? 'unfollow' : 'follow';
-
-    // Send AJAX request
-    fetch('ajax/follow.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            user_id: userId,
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update button state
-            if (action === 'follow') {
-                buttonElement.classList.add('following');
-                buttonElement.innerHTML = '<i class="fas fa-user-check"></i> Takip Ediliyor';
-            } else {
-                buttonElement.classList.remove('following');
-                buttonElement.innerHTML = '<i class="fas fa-user-plus"></i> Takip Et';
-            }
-
-            // Update follower count
-            const statValue = buttonElement.closest('.user-card').querySelector('.user-stat-value');
-            if (statValue) {
-                const currentCount = parseInt(statValue.textContent);
-                statValue.textContent = action === 'follow' ? currentCount + 1 : currentCount - 1;
-            }
-        } else {
-            alert('İşlem başarısız: ' + (data.message || 'Bilinmeyen hata'));
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Bir hata oluştu. Lütfen tekrar deneyin.');
     });
-}
+
+    // Follow/Unfollow Function (Already defined in script.js, but adding inline for safety)
+    function toggleFollow(userId, buttonElement) {
+        const isFollowing = buttonElement.classList.contains('following');
+        const action = isFollowing ? 'unfollow' : 'follow';
+
+        // Send AJAX request
+        fetch('/lonely_eye/api/follow.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                action: action
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button state
+                    if (action === 'follow') {
+                        buttonElement.classList.add('following');
+                        buttonElement.innerHTML = '<i class="fas fa-user-check"></i> Takip Ediliyor';
+                    } else {
+                        buttonElement.classList.remove('following');
+                        buttonElement.innerHTML = '<i class="fas fa-user-plus"></i> Takip Et';
+                    }
+
+                    // Update follower count
+                    const statValue = buttonElement.closest('.user-card').querySelector('.user-stat-value');
+                    if (statValue) {
+                        const currentCount = parseInt(statValue.textContent);
+                        statValue.textContent = action === 'follow' ? currentCount + 1 : currentCount - 1;
+                    }
+                } else {
+                    alert('İşlem başarısız: ' + (data.message || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+            });
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

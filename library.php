@@ -298,6 +298,22 @@ require_once 'includes/header.php';
         <p>Binlerce kitap arasından keşfet, oku, paylaş</p>
     </div>
 
+    <!-- Language Filter -->
+    <div class="categories-section">
+        <h2><i class="fas fa-language"></i> Dil / Menşei</h2>
+        <div class="categories-scroll">
+            <button class="badge badge-primary lang-filter active" data-lang="">
+                <i class="fas fa-globe"></i> Tümü
+            </button>
+            <button class="badge badge-secondary lang-filter" data-lang="tr">
+                <i class="fas fa-flag"></i> Yerli (Türkçe)
+            </button>
+            <button class="badge badge-secondary lang-filter" data-lang="en">
+                <i class="fas fa-flag"></i> Yabancı (İngilizce)
+            </button>
+        </div>
+    </div>
+
     <!-- Horizontal Category Bar -->
     <div class="categories-section">
         <h2><i class="fas fa-th-large"></i> Kategoriler</h2>
@@ -375,6 +391,35 @@ require_once 'includes/header.php';
     let isLoading = false;
     let hasMore = true;
     const category = '<?php echo addslashes($selected_category); ?>';
+    let selectedLang = ''; // Language filter
+
+    // Language Filter Buttons
+    document.addEventListener('DOMContentLoaded', function () {
+        const langFilters = document.querySelectorAll('.lang-filter');
+
+        langFilters.forEach(button => {
+            button.addEventListener('click', function () {
+                // Remove active from all
+                langFilters.forEach(btn => {
+                    btn.classList.remove('active', 'badge-primary');
+                    btn.classList.add('badge-secondary');
+                });
+
+                // Add active to clicked
+                this.classList.add('active', 'badge-primary');
+                this.classList.remove('badge-secondary');
+
+                // Update language filter
+                selectedLang = this.getAttribute('data-lang');
+
+                // Reset and reload
+                currentPage = 1;
+                hasMore = true;
+                document.getElementById('booksGrid').innerHTML = '';
+                loadMoreBooks();
+            });
+        });
+    });
 
     window.addEventListener('scroll', function () {
         if (isLoading || !hasMore) return;
@@ -399,6 +444,9 @@ require_once 'includes/header.php';
         if (category) {
             url += `&category=${encodeURIComponent(category)}`;
         }
+        if (selectedLang) {
+            url += `&lang=${encodeURIComponent(selectedLang)}`;
+        }
 
         fetch(url)
             .then(response => response.json())
@@ -411,7 +459,8 @@ require_once 'includes/header.php';
                         booksGrid.appendChild(card);
                     });
 
-                    if (data.books.length < 40) {
+                    // Check if there are more books
+                    if (!data.has_more || data.books.length < 40) {
                         hasMore = false;
                     }
                 } else {

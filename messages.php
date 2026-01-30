@@ -15,37 +15,31 @@ if (!isset($_SESSION['user_id'])) {
 $current_user_id = $_SESSION['user_id'];
 $selected_user_id = isset($_GET['user']) ? (int) $_GET['user'] : 0;
 
-// Fetch conversations (users who have messaged with current user)
+// Fetch users that current user is following
 $stmt = $pdo->prepare("
-    SELECT DISTINCT 
-        CASE 
-            WHEN m.sender_id = ? THEN m.receiver_id 
-            ELSE m.sender_id 
-        END as user_id,
+    SELECT 
+        u.id as user_id,
         u.username,
         u.avatar,
         (SELECT message FROM messages 
-         WHERE (sender_id = ? AND receiver_id = user_id) 
-            OR (sender_id = user_id AND receiver_id = ?)
+         WHERE (sender_id = ? AND receiver_id = u.id) 
+            OR (sender_id = u.id AND receiver_id = ?)
          ORDER BY created_at DESC LIMIT 1) as last_message,
         (SELECT created_at FROM messages 
-         WHERE (sender_id = ? AND receiver_id = user_id) 
-            OR (sender_id = user_id AND receiver_id = ?)
+         WHERE (sender_id = ? AND receiver_id = u.id) 
+            OR (sender_id = u.id AND receiver_id = ?)
          ORDER BY created_at DESC LIMIT 1) as last_message_time,
         (SELECT COUNT(*) FROM messages 
-         WHERE sender_id = user_id AND receiver_id = ? AND is_read = 0) as unread_count
-    FROM messages m
-    JOIN users u ON u.id = CASE 
-        WHEN m.sender_id = ? THEN m.receiver_id 
-        ELSE m.sender_id 
-    END
-    WHERE m.sender_id = ? OR m.receiver_id = ?
-    ORDER BY last_message_time DESC
+         WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
+    FROM follows f
+    JOIN users u ON u.id = f.following_id
+    WHERE f.follower_id = ?
+    ORDER BY 
+        CASE WHEN last_message_time IS NULL THEN 1 ELSE 0 END,
+        last_message_time DESC,
+        u.username ASC
 ");
 $stmt->execute([
-    $current_user_id,
-    $current_user_id,
-    $current_user_id,
     $current_user_id,
     $current_user_id,
     $current_user_id,
@@ -131,7 +125,13 @@ require_once 'includes/sidebar.php';
                                     <?php echo htmlspecialchars($conv['username']); ?>
                                 </h6>
                                 <p>
-                                    <?php echo htmlspecialchars(substr($conv['last_message'], 0, 40)) . (strlen($conv['last_message']) > 40 ? '...' : ''); ?>
+                                    <?php
+                                    if ($conv['last_message']) {
+                                        echo htmlspecialchars(substr($conv['last_message'], 0, 40)) . (strlen($conv['last_message']) > 40 ? '...' : '');
+                                    } else {
+                                        echo '<em>Henüz mesaj yok</em>';
+                                    }
+                                    ?>
                                 </p>
                             </div>
                             <?php if ($conv['unread_count'] > 0): ?>
@@ -144,7 +144,10 @@ require_once 'includes/sidebar.php';
                 <?php else: ?>
                     <div class="empty-conversations">
                         <i class="fas fa-inbox fa-3x mb-3"></i>
-                        <p>Henüz mesajınız yok</p>
+                        <p>Henüz kimseyi takip etmiyorsunuz</p>
+                        <a href="discover.php" class="btn btn-primary btn-sm mt-2">
+                            <i class="fas fa-users"></i> İnsanları Keşfet
+                        </a>
                     </div>
                 <?php endif; ?>
             </div>
