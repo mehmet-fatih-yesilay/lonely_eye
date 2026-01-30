@@ -71,6 +71,14 @@
                             </a>
                         </li>
 
+                        <!-- Search Form -->
+                        <li class="nav-item">
+                            <form action="/lonely_eye/search.php" method="GET" class="d-flex" style="margin-left: 0.5rem;">
+                                <input type="search" name="q" class="form-control form-control-sm" placeholder="Ara..."
+                                    style="width: 200px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">
+                            </form>
+                        </li>
+
                         <!-- Theme Toggle -->
                         <li class="nav-item">
                             <button id="theme-toggle" class="theme-toggle" title="Tema Değiştir">

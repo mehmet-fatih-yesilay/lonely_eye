@@ -270,11 +270,13 @@ a:hover {
    FORM ELEMENTS
    ============================================ */
 .form-control,
-.form-select {
+.form-select,
+textarea.form-control,
+input.form-control {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    color: var(--text-main);
+    color: #FFFFFF !important;
     padding: 0.75rem 1rem;
     font-family: var(--font-family);
     transition: all 0.3s ease;
@@ -282,15 +284,33 @@ a:hover {
 }
 
 .form-control:focus,
-.form-select:focus {
+.form-select:focus,
+textarea.form-control:focus,
+input.form-control:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 4px var(--primary-glow);
     background: var(--bg-card);
+    color: #FFFFFF !important;
 }
 
 .form-control::placeholder {
     color: var(--text-muted);
+}
+
+/* Ensure text is visible in light theme too */
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select,
+[data-theme="light"] textarea.form-control,
+[data-theme="light"] input.form-control {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-select:focus,
+[data-theme="light"] textarea.form-control:focus,
+[data-theme="light"] input.form-control:focus {
+    color: var(--text-main) !important;
 }
 
 .form-label {

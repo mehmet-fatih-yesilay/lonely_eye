@@ -463,13 +463,13 @@ require_once 'includes/header.php';
                     </h3>
                     <p>Toplam Yorum</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='#followers'"
+                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followersModal"
                     title="Takipçileri Görüntüle">
                     <i class="fas fa-users"></i>
                     <h3><?php echo number_format($follower_stats['follower_count']); ?></h3>
                     <p>Takipçi</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='#following'"
+                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followingModal"
                     title="Takip Edilenleri Görüntüle">
                     <i class="fas fa-user-friends"></i>
                     <h3><?php echo number_format($following_stats['following_count']); ?></h3>
@@ -489,17 +489,24 @@ require_once 'includes/header.php';
     <!-- Settings Tab -->
     <div class="tab-content" id="settings">
         <div class="settings-section">
-            <form method="POST" action="">
+            <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
                 <!-- Profile Settings -->
                 <div class="settings-group">
                     <h4><i class="fas fa-user-edit"></i> Profil Bilgileri</h4>
 
                     <div class="form-group">
-                        <label class="form-label">Avatar URL</label>
+                        <label class="form-label">Profil Fotoğrafı</label>
+                        <input type="file" name="profile_photo" id="profilePhotoInput" class="form-control"
+                            accept="image/*">
+                        <small class="text-muted">JPG, PNG, GIF veya WebP formatında, maksimum 5MB</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Avatar URL (Alternatif)</label>
                         <input type="url" name="avatar" class="form-control"
                             value="<?php echo htmlspecialchars($user['avatar']); ?>"
                             placeholder="https://example.com/avatar.jpg">
-                        <small class="text-muted">Profil resminizin URL adresini girin</small>
+                        <small class="text-muted">Veya profil resminizin URL adresini girin</small>
                     </div>
 
                     <div class="form-group">
@@ -593,6 +600,75 @@ require_once 'includes/header.php';
             }, 5000);
         });
     });
+
+    // Profile photo upload
+    const profilePhotoInput = document.getElementById('profilePhotoInput');
+    if (profilePhotoInput) {
+        profilePhotoInput.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                const formData = new FormData();
+                formData.append('profile_photo', this.files[0]);
+
+                fetch('/lonely_eye/api/upload_profile_photo.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update avatar images
+                            document.querySelectorAll('img[alt="Avatar"]').forEach(img => {
+                                img.src = data.avatar_url;
+                            });
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Dosya yüklenirken bir hata oluştu.');
+                    });
+            }
+        });
+    }
 </script>
+
+<!-- Followers Modal -->
+<div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                <h5 class="modal-title" id="followersModalLabel">
+                    <i class="fas fa-users"></i> Takipçiler
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted text-center">Takipçi listesi yakında eklenecek...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Following Modal -->
+<div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                <h5 class="modal-title" id="followingModalLabel">
+                    <i class="fas fa-user-friends"></i> Takip Edilenler
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted text-center">Takip edilen listesi yakında eklenecek...</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once 'includes/footer.php'; ?>
