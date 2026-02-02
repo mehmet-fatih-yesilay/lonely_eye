@@ -528,32 +528,184 @@ require_once 'includes/header.php';
                 <?php endif; ?>
             <?php endforeach; ?>
         </div>
+
+        <!-- Scroll Sentinel for Infinite Scroll -->
+        <div id="scroll-sentinel" style="height: 50px; width: 100%; text-align: center; padding: 20px;">
+            <span id="loading-text" class="text-muted">Daha fazla kitap aranıyor...</span>
+            <div class="spinner-border text-primary spinner-border-sm" role="status" style="display:none;"></div>
+        </div>
     </div>
 
 </div>
 
 <script>
-    // Live Search Functionality
+    // ============================================
+    // INFINITE SCROLL IMPLEMENTATION
+    // ============================================
+    let currentPage = 1;
+    let isLoading = false;
+    let observer;
+    const limit = 42;
+
     document.addEventListener('DOMContentLoaded', function () {
+        // Setup IntersectionObserver
+        setupObserver();
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(this.delay);
+                this.delay = setTimeout(function () {
+                    filterBooks();
+                }, 500);
+            });
+        }
+    });
+
+    function setupObserver() {
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !isLoading) {
+                    console.log("✅ Bekçi görüldü! Sayfa:", currentPage + 1);
+                    currentPage++;
+                    loadMoreBooks();
+                }
+            });
+        }, options);
+
+        const sentinel = document.getElementById('scroll-sentinel');
+        if (sentinel) {
+            observer.observe(sentinel);
+            console.log("✅ Dashboard IntersectionObserver kuruldu");
+        }
+    }
+
+    function loadMoreBooks(retryCount = 0) {
+        if (isLoading) return;
+
+        isLoading = true;
+        const sentinel = document.getElementById('scroll-sentinel');
+        const spinner = sentinel ? sentinel.querySelector('.spinner-border') : null;
+        const text = sentinel ? sentinel.querySelector('#loading-text') : null;
+
+        if (spinner) spinner.style.display = 'inline-block';
+        if (text) text.textContent = retryCount > 0 ? `Yeniden deneniyor (${retryCount}/3)...` : "Yeni kitaplar yükleniyor...";
+
+        const url = `api/get_books.php?page=${currentPage}&limit=${limit}&lang=all`;
+
+        console.log(`📡 Dashboard API İsteği (Sayfa ${currentPage}):`, url);
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log(`📦 Gelen veri (Sayfa ${currentPage}):`, data.length, "kitap");
+
+                if (data.length > 0) {
+                    renderBooks(data);
+                    if (text) text.textContent = "Daha fazlası için kaydırın...";
+                    retryCount = 0;
+                } else {
+                    if (text) text.textContent = "✓ Tüm kitaplar yüklendi";
+                    if (observer && sentinel) {
+                        observer.unobserve(sentinel);
+                        console.log("✅ Dashboard: Tüm sonuçlar yüklendi");
+                    }
+                }
+                isLoading = false;
+                if (spinner) spinner.style.display = 'none';
+            })
+            .catch(err => {
+                console.error('❌ Dashboard Hata:', err);
+
+                if (retryCount < 3) {
+                    console.log(`🔄 Yeniden deneniyor... (${retryCount + 1}/3)`);
+                    isLoading = false;
+                    setTimeout(() => {
+                        loadMoreBooks(retryCount + 1);
+                    }, 1000 * (retryCount + 1));
+                } else {
+                    isLoading = false;
+                    if (text) {
+                        text.innerHTML = `❌ Bağlantı hatası. <a href="#" onclick="location.reload()" style="color:var(--primary)">Yenileyin</a>`;
+                    }
+                    if (spinner) spinner.style.display = 'none';
+                }
+            });
+    }
+
+    function renderBooks(books) {
+        const container = document.getElementById('itemsGrid');
+
+        books.forEach(book => {
+            const isGoogle = book.source === 'google';
+            const detailLink = isGoogle
+                ? `item-detail.php?google_id=${book.id}`
+                : `item-detail.php?id=${book.id}`;
+
+            const card = document.createElement(isGoogle ? 'div' : 'a');
+            card.className = 'item-card-modern';
+
+            if (!isGoogle) {
+                card.href = detailLink;
+            } else {
+                card.style.cursor = 'pointer';
+                card.onclick = function () {
+                    window.location.href = detailLink;
+                };
+            }
+
+            card.innerHTML = `
+                <img src="${book.image}" 
+                     alt="${escapeHtml(book.title)}"
+                     onerror="this.src='assets/img/default_book.png'">
+                <div class="item-card-modern-body">
+                    <h6>${escapeHtml(book.title)}</h6>
+                    <p class="author">${escapeHtml(book.author)}</p>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>${book.rating > 0 ? book.rating.toFixed(1) : '0.0'}</span>
+                    </div>
+                </div>
+                ${isGoogle ? '<span class="badge bg-warning position-absolute" style="top:8px;right:8px;font-size:0.6rem;z-index:10;">Google</span>' : ''}
+            `;
+
+            container.appendChild(card);
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function filterBooks() {
         const searchInput = document.getElementById('searchInput');
         const itemsGrid = document.getElementById('itemsGrid');
         const items = itemsGrid.querySelectorAll('.item-card-modern');
+        const searchTerm = searchInput.value.toLowerCase().trim();
 
-        searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase().trim();
+        items.forEach(item => {
+            const title = item.querySelector('h6')?.textContent.toLowerCase() || '';
+            const author = item.querySelector('.author')?.textContent.toLowerCase() || '';
 
-            items.forEach(item => {
-                const title = item.querySelector('h6')?.textContent.toLowerCase() || '';
-                const author = item.querySelector('.author')?.textContent.toLowerCase() || '';
-
-                if (title.includes(searchTerm) || author.includes(searchTerm)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+            if (title.includes(searchTerm) || author.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
         });
-    });
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -198,12 +198,3 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <i class="fas fa-sign-out-alt"></i> Çıkış Yap
     </a>
 </div>
-
-<script>
-    // Theme Toggle (moved to header)
-    document.addEventListener('DOMContentLoaded', function () {
-        const htmlElement = document.documentElement;
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        htmlElement.setAttribute('data-theme', savedTheme);
-    });
-</script>

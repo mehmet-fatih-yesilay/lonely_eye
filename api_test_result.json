@@ -1,0 +1,102 @@
+﻿[
+    {
+        "id": 101,
+        "google_id": null,
+        "title": "An Inquiry Into the Nature and Causes of the Wealth of Nations",
+        "author": "Adam Smith",
+        "image": "https:\/\/books.google.com\/books\/content?id=C5dNAAAAcAAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        "rating": 5,
+        "description": "An Inquiry into the Nature and Causes of the Wealth of Nations, generally referred to by its shortened title The Wealth of Nations, is the magnum opus of the Scottish economist and moral philosopher Adam Smith. First published in 1776, the book offers one of the world's first collected descriptions of what builds nations' wealth, and is today a fundamental work in classical economics. By reflecting upon the economics at the beginning of the Industrial Revolution, the book touches upon such br...",
+        "source": "local"
+    },
+    {
+        "id": 102,
+        "google_id": null,
+        "title": "The Road to Serfdom",
+        "author": "Friedrich August Hayek",
+        "image": "https:\/\/books.google.com\/books\/content?id=eTve6XEUbYIC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        "rating": 5,
+        "description": "Hayek argues convincingly that, while socialist ideals may be tempting, they cannot be accomplished except by means that few would approve of.",
+        "source": "local"
+    },
+    {
+        "id": 103,
+        "google_id": null,
+        "title": "Economics Explained",
+        "author": "Robert L. Heilbroner, Lester C. Thurow",
+        "image": "https:\/\/books.google.com\/books\/content?id=l5a7AAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        "rating": 4.3,
+        "description": "Explains the nature of economic forces and defines economic terms.",
+        "source": "local"
+    },
+    {
+        "id": 104,
+        "google_id": null,
+        "title": "Small is Beautiful",
+        "author": "Ernst Friedrich Schumacher",
+        "image": "https:\/\/books.google.com\/books\/content?id=0YhN4Ykzs_sC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        "rating": 4.7,
+        "description": "The 25th anniversary edition of Schumacher's book of essays on humanistic economics expands on his ideas by adding commentaries of contemporary thinkers who have been deeply influenced by his work and thought.",
+        "source": "local"
+    },
+    {
+        "id": 105,
+        "google_id": null,
+        "title": "History of Economic Analysis",
+        "author": "Joseph A. Schumpeter",
+        "image": "https:\/\/books.google.com\/books\/content?id=ld-5AAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        "rating": 3.5,
+        "description": "A complete survey of man's intellectual advances in the light of economic phenomena.",
+        "source": "local"
+    },
+    {
+        "id": 106,
+        "google_id": null,
+        "title": "An Inquiry Into the Nature and Causes of the Wealth of Nations",
+        "author": "Adam Smith",
+        "image": "https:\/\/books.google.com\/books\/content?id=CIlHAAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        "rating": 4.2,
+        "description": "Bu kitap hakkında henüz bir açıklama eklenmemiş.",
+        "source": "local"
+    },
+    {
+        "id": 107,
+        "google_id": null,
+        "title": "The End of Economic Man",
+        "author": "George P. Brockway",
+        "image": "https:\/\/books.google.com\/books\/content?id=op5dAAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+        "rating": 3.7,
+        "description": "\"In any future economics, George Brockway proposes, this concern will be reversed. Human beings will be more important that things, and what Carlyle quite properly called the dismal science will take on a new and humane aspect. Like the good life it celebrates, the book requires thought and stimulates thought, starting with the Prologue, \"Life Is Unfair. Why Should We Care?\" Throughout the book original theory is intertwined with practical example, as in the chapter titled \"Why the Trade Defi...",
+        "source": "local"
+    },
+    {
+        "id": 108,
+        "google_id": null,
+        "title": "\"Unto this Last\"",
+        "author": "John Ruskin",
+        "image": "https:\/\/books.google.com\/books\/content?id=x5fidJEVnVAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        "rating": 3.6,
+        "description": "Bu kitap hakkında henüz bir açıklama eklenmemiş.",
+        "source": "local"
+    },
+    {
+        "id": 109,
+        "google_id": null,
+        "title": "Principles of economics",
+        "author": "Alfred Marshall",
+        "image": "https:\/\/books.google.com\/books\/content?id=JOxNGBMz--EC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        "rating": 4.4,
+        "description": "Bu kitap hakkında henüz bir açıklama eklenmemiş.",
+        "source": "local"
+    },
+    {
+        "id": 110,
+        "google_id": null,
+        "title": "Industrialization and Development",
+        "author": "Ray Kiely",
+        "image": "https:\/\/books.google.com\/books\/content?id=C0XIS5lf3kQC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        "rating": 3.5,
+        "description": "Ray Kiely offers an accessible introduction to key debates on industrialisation and development, specifically targeted at undergraduate students on courses in development.",
+        "source": "local"
+    }
+]

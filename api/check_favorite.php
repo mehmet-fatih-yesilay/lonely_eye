@@ -4,7 +4,7 @@
  * Returns whether a book is favorited by current user
  */
 
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 header('Content-Type: application/json');
 

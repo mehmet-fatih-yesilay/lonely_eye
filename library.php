@@ -21,87 +21,8 @@ $selected_category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $stmt = $pdo->query("SELECT * FROM genres ORDER BY name");
 $genres = $stmt->fetchAll();
 
-// ============================================
-// FETCH INITIAL BOOKS (First 40)
-// ============================================
-$limit = 40;
-$books = [];
-
-if (!empty($selected_category)) {
-    // Filter by category
-    $stmt = $pdo->prepare("
-        SELECT i.id, i.title, i.author, i.cover_image, i.rating_score 
-        FROM items i 
-        LEFT JOIN genres g ON i.genre_id = g.id 
-        WHERE g.name = ?
-        ORDER BY i.created_at DESC 
-        LIMIT ?
-    ");
-    $stmt->execute([$selected_category, $limit]);
-} else {
-    // All books
-    $stmt = $pdo->prepare("
-        SELECT id, title, author, cover_image, rating_score 
-        FROM items 
-        ORDER BY created_at DESC 
-        LIMIT ?
-    ");
-    $stmt->execute([$limit]);
-}
-
-$db_books = $stmt->fetchAll();
-
-foreach ($db_books as $book) {
-    $books[] = [
-        'id' => $book['id'],
-        'title' => $book['title'],
-        'author' => $book['author'],
-        'cover_image' => $book['cover_image'],
-        'rating_score' => $book['rating_score'],
-        'source' => 'database'
-    ];
-}
-
-// Fill with API if needed
-$items_needed = $limit - count($books);
-
-if ($items_needed > 0) {
-    $subjects = ['History', 'Fiction', 'Science', 'Philosophy', 'Psychology', 'Literature'];
-    $random_subject = $subjects[array_rand($subjects)];
-    $api_url = "https://www.googleapis.com/books/v1/volumes?q=subject:$random_subject&orderBy=relevance&maxResults=$items_needed&langRestrict=tr";
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $api_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($http_code === 200 && $response) {
-        $data = json_decode($response, true);
-
-        if (isset($data['items']) && !empty($data['items'])) {
-            foreach ($data['items'] as $api_item) {
-                $volumeInfo = $api_item['volumeInfo'] ?? [];
-
-                $books[] = [
-                    'id' => 0,
-                    'title' => $volumeInfo['title'] ?? 'Untitled',
-                    'author' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : 'Unknown',
-                    'cover_image' => str_replace('http://', 'https://', $volumeInfo['imageLinks']['thumbnail'] ?? 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=300&h=450&fit=crop'),
-                    'rating_score' => rand(35, 50) / 10,
-                    'source' => 'api'
-                ];
-
-                if (count($books) >= $limit)
-                    break;
-            }
-        }
-    }
-}
+// Note: Initial books are now loaded via JavaScript API call
+// This ensures consistency with infinite scroll system
 
 $page_title = "Kitaplar";
 require_once 'includes/header.php';
@@ -354,206 +275,258 @@ require_once 'includes/header.php';
         </div>
     </div>
 
-    <!-- Items Grid -->
-    <div class="items-grid" id="booksGrid">
-        <?php foreach ($books as $book): ?>
-            <?php if ($book['source'] === 'api'): ?>
-                <!-- API Item (No link) -->
-                <div class="item-card-modern">
-                    <img src="<?php echo htmlspecialchars($book['cover_image']); ?>"
-                        alt="<?php echo htmlspecialchars($book['title']); ?>">
-                    <div class="item-card-modern-body">
-                        <h6><?php echo htmlspecialchars($book['title']); ?></h6>
-                        <p class="author"><?php echo htmlspecialchars($book['author']); ?></p>
-                        <div class="rating">
-                            <i class="fas fa-star"></i>
-                            <span><?php echo number_format($book['rating_score'], 1); ?></span>
-                        </div>
-                    </div>
-                </div>
-            <?php else: ?>
-                <!-- Database Item (With link) -->
-                <a href="item-detail.php?id=<?php echo $book['id']; ?>" class="item-card-modern">
-                    <img src="<?php echo htmlspecialchars($book['cover_image']); ?>"
-                        alt="<?php echo htmlspecialchars($book['title']); ?>">
-                    <div class="item-card-modern-body">
-                        <h6><?php echo htmlspecialchars($book['title']); ?></h6>
-                        <p class="author"><?php echo htmlspecialchars($book['author']); ?></p>
-                        <div class="rating">
-                            <i class="fas fa-star"></i>
-                            <span><?php echo number_format($book['rating_score'], 1); ?></span>
-                        </div>
-                    </div>
-                </a>
-            <?php endif; ?>
-        <?php endforeach; ?>
+    <!-- Items Grid - Populated by JavaScript -->
+    <div class="items-grid" id="book-grid">
+        <!-- Books will be loaded here via JavaScript infinite scroll -->
     </div>
 
-    <!-- Loading Indicator -->
-    <div class="loading-indicator" id="loadingIndicator">
-        <i class="fas fa-spinner"></i>
-        <p>Daha fazla kitap yükleniyor...</p>
+    <!-- Scroll Sentinel - IntersectionObserver Bekçisi -->
+    <div id="scroll-sentinel" style="height: 50px; width: 100%; text-align: center; padding: 20px;">
+        <span id="loading-text" class="text-muted">Kitaplar yükleniyor...</span>
+        <div class="spinner-border text-primary spinner-border-sm" role="status" style="display:inline-block;"></div>
     </div>
 
 </div>
 
 <script>
-    // Infinite Scroll Implementation
     let currentPage = 1;
     let isLoading = false;
-    let hasMore = true;
-    const category = '<?php echo addslashes($selected_category); ?>';
-    let selectedLang = ''; // Language filter
-    let searchQuery = ''; // Search query
-    let searchTimeout = null;
+    let currentLang = 'all';
+    let currentCategory = '<?php echo isset($_GET["category"]) ? htmlspecialchars($_GET["category"]) : ""; ?>';
+    const limit = 42;
+    let observer;
 
-    // Language Filter Buttons
     document.addEventListener('DOMContentLoaded', function () {
-        const langFilters = document.querySelectorAll('.lang-filter');
-        const searchInput = document.getElementById('searchInput');
+        console.log("📚 Library page loaded");
 
-        // Language filter handling
-        langFilters.forEach(button => {
-            button.addEventListener('click', function () {
-                // Remove active from all
-                langFilters.forEach(btn => {
-                    btn.classList.remove('active', 'badge-primary');
+        // 1. Setup IntersectionObserver
+        setupObserver();
+
+        // 2. Load initial books (page 1)
+        loadBooks();
+
+        // 3. Arama inputu (debounce ile)
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(this.delay);
+                this.delay = setTimeout(function () {
+                    resetAndLoad();
+                }, 800);
+            });
+        }
+
+        // 4. Dil Filtreleri
+        const langButtons = document.querySelectorAll('.lang-filter'); // Changed from .lang-filter-btn to .lang-filter to match existing HTML
+        langButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Tüm butonlardan active kaldır
+                langButtons.forEach(btn => {
+                    btn.classList.remove('active', 'badge-primary'); // Keep badge-primary/secondary logic
                     btn.classList.add('badge-secondary');
                 });
 
-                // Add active to clicked
-                this.classList.add('active', 'badge-primary');
+                // Tıklanan butona active ekle
+                this.classList.add('active', 'badge-primary'); // Keep badge-primary/secondary logic
                 this.classList.remove('badge-secondary');
 
-                // Update language filter
-                selectedLang = this.getAttribute('data-lang');
-
-                // Reset and reload
-                resetAndReload();
+                // Dil değerini güncelle
+                currentLang = this.getAttribute('data-lang') || 'all';
+                resetAndLoad();
             });
         });
 
-        // Search input handling with debounce
-        if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    searchQuery = this.value.trim();
-                    resetAndReload();
-                }, 500); // 500ms debounce
+        // 5. Kategori Butonları (Eğer varsa)
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Kategori değerini al
+                const category = this.getAttribute('data-category') || '';
+                currentCategory = category;
+
+                // Tüm butonlardan active kaldır
+                categoryButtons.forEach(btn => {
+                    btn.classList.remove('badge-primary');
+                    btn.classList.add('badge-secondary');
+                });
+
+                // Tıklanan butona active ekle
+                this.classList.add('badge-primary');
+                this.classList.remove('badge-secondary');
+
+                resetAndLoad();
             });
-        }
+        });
     });
 
-    function resetAndReload() {
-        currentPage = 1;
-        hasMore = true;
-        document.getElementById('booksGrid').innerHTML = '';
-        loadMoreBooks();
+    function setupObserver() {
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !isLoading) {
+                    console.log("✅ Bekçi görüldü! Sayfa:", currentPage + 1);
+                    currentPage++;
+                    loadBooks();
+                }
+            });
+        }, options);
+
+        const sentinel = document.getElementById('scroll-sentinel');
+        if (sentinel) {
+            observer.observe(sentinel);
+            console.log("✅ IntersectionObserver kuruldu");
+        } else {
+            console.error("❌ Bekçi elementi bulunamadı!");
+        }
     }
 
-    window.addEventListener('scroll', function () {
-        if (isLoading || !hasMore) return;
+    function resetAndLoad() {
+        currentPage = 1;
+        document.getElementById('book-grid').innerHTML = '';
+        loadBooks();
+    }
 
-        const scrollPosition = window.innerHeight + window.scrollY;
-        const pageHeight = document.documentElement.scrollHeight;
-
-        // Load more when 200px from bottom
-        if (scrollPosition >= pageHeight - 200) {
-            loadMoreBooks();
+    function loadBooks(retryCount = 0) {
+        if (isLoading) {
+            console.log("⏳ Zaten yükleniyor, bekle...");
+            return;
         }
-    });
-
-    function loadMoreBooks() {
-        if (isLoading || !hasMore) return;
 
         isLoading = true;
 
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        loadingIndicator.classList.add('active');
+        const sentinel = document.getElementById('scroll-sentinel');
+        const spinner = sentinel ? sentinel.querySelector('.spinner-border') : null;
+        const text = sentinel ? sentinel.querySelector('#loading-text') : null;
 
-        let url = `/lonely_eye/api/get_books.php?page=${currentPage}&limit=40`;
-        if (category) {
-            url += `&category=${encodeURIComponent(category)}`;
-        }
-        if (selectedLang) {
-            url += `&lang=${encodeURIComponent(selectedLang)}`;
-        }
-        if (searchQuery) {
-            url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
+        if (spinner) spinner.style.display = 'inline-block';
+        if (text) text.textContent = retryCount > 0 ? `Yeniden deneniyor (${retryCount}/3)...` : "Kütüphane taranıyor...";
 
-        console.log('Loading page:', currentPage, 'URL:', url);
+        // Get search term
+        let searchTerm = '';
+        const searchEl = document.getElementById('searchInput');
+        if (searchEl) searchTerm = searchEl.value;
+
+        // Build API URL
+        const url = `api/get_books.php?page=${currentPage}&limit=${limit}&lang=${currentLang}&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(searchTerm)}`;
+
+        console.log(`📡 API İsteği (Sayfa ${currentPage}):`, url);
 
         fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log('API Response:', data);
-
-                if (data.success && data.books && data.books.length > 0) {
-                    const booksGrid = document.getElementById('booksGrid');
-
-                    data.books.forEach(book => {
-                        const card = createBookCard(book);
-                        booksGrid.appendChild(card);
-                    });
-
-                    // Increment page for next load
-                    currentPage++;
-
-                    // Check if there are more books
-                    if (!data.has_more || data.books.length < 40) {
-                        hasMore = false;
-                    }
-                } else {
-                    hasMore = false;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                return response.json();
             })
-            .catch(error => {
-                console.error('Error loading books:', error);
-                hasMore = false;
-            })
-            .finally(() => {
+            .then(data => {
+                console.log(`📦 Gelen veri (Sayfa ${currentPage}):`, data.length, "kitap");
+
+                if (data.length > 0) {
+                    renderBooks(data);
+                    if (text) text.textContent = "Daha fazlası için kaydırın...";
+
+                    // Reset retry count on success
+                    retryCount = 0;
+                } else {
+                    // No more results
+                    if (currentPage === 1) {
+                        const container = document.getElementById('book-grid');
+                        container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:3rem;"><h4 class="text-muted">Kitap bulunamadı</h4><p class="text-muted">Farklı bir arama terimi veya kategori deneyin.</p></div>';
+                    } else {
+                        if (text) text.textContent = "✓ Tüm kitaplar yüklendi";
+                        // Disconnect observer when no more results
+                        if (observer && sentinel) {
+                            observer.unobserve(sentinel);
+                            console.log("✅ Tüm sonuçlar yüklendi, observer durduruldu");
+                        }
+                    }
+                }
+
                 isLoading = false;
-                loadingIndicator.classList.remove('active');
+                if (spinner) spinner.style.display = 'none';
+            })
+            .catch(err => {
+                console.error('❌ Hata:', err);
+
+                // Retry logic (max 3 attempts)
+                if (retryCount < 3) {
+                    console.log(`🔄 Yeniden deneniyor... (${retryCount + 1}/3)`);
+                    isLoading = false;
+                    setTimeout(() => {
+                        loadBooks(retryCount + 1);
+                    }, 1000 * (retryCount + 1)); // Exponential backoff
+                } else {
+                    // Max retries reached
+                    isLoading = false;
+                    if (text) {
+                        text.innerHTML = `❌ Bağlantı hatası. <a href="#" onclick="location.reload()" style="color:var(--primary)">Sayfayı yenileyin</a>`;
+                    }
+                    if (spinner) spinner.style.display = 'none';
+                }
             });
     }
 
-    function createBookCard(book) {
-        // Create clickable link for database books, div for Google books
-        const card = document.createElement(book.id > 0 ? 'a' : 'div');
-        card.className = 'item-card-modern';
+    function renderBooks(books) {
+        const container = document.getElementById('book-grid');
 
-        if (book.id > 0) {
-            // Database book - make it clickable
-            card.href = `item-detail.php?id=${book.id}`;
-        } else if (book.google_id) {
-            // Google book - make it clickable with google_id
-            card.style.cursor = 'pointer';
-            card.onclick = function () {
-                window.location.href = `item-detail.php?google_id=${book.google_id}`;
-            };
-        }
+        books.forEach(book => {
+            const isGoogle = book.source === 'google';
+            const detailLink = isGoogle
+                ? `item-detail.php?google_id=${book.id}`
+                : `item-detail.php?id=${book.id}`;
 
-        card.innerHTML = `
-        <img src="${escapeHtml(book.image)}" alt="${escapeHtml(book.title)}">
-        <div class="item-card-modern-body">
-            <h6>${escapeHtml(book.title)}</h6>
-            <p class="author">${escapeHtml(book.author)}</p>
-            <div class="rating">
-                <i class="fas fa-star"></i>
-                <span>${book.rating.toFixed(1)}</span>
-            </div>
-        </div>
-    `;
+            // Create element (a for local, div for Google - but make both clickable)
+            const card = document.createElement(isGoogle ? 'div' : 'a');
+            card.className = 'item-card-modern';
 
-        return card;
+            if (!isGoogle) {
+                card.href = detailLink;
+            } else {
+                // Make Google books clickable
+                card.style.cursor = 'pointer';
+                card.onclick = function () {
+                    window.location.href = detailLink;
+                };
+            }
+
+            // Build inner HTML
+            card.innerHTML = `
+                <img src="${book.image}" 
+                     alt="${escapeHtml(book.title)}"
+                     onerror="this.src='assets/img/default_book.png'">
+                <div class="item-card-modern-body">
+                    <h6>${escapeHtml(book.title)}</h6>
+                    <p class="author">${escapeHtml(book.author)}</p>
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span>${book.rating > 0 ? book.rating.toFixed(1) : '0.0'}</span>
+                    </div>
+                </div>
+                ${isGoogle ? '<span class="badge bg-warning position-absolute" style="top:8px;right:8px;font-size:0.6rem;z-index:10;">Google</span>' : ''}
+            `;
+
+            container.appendChild(card);
+        });
     }
 
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function setLang(lang) {
+        currentLang = lang;
+        resetAndLoad();
     }
 </script>
 
