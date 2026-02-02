@@ -36,18 +36,21 @@ CREATE TABLE user_interests (
 -- Items Table (Books & Magazines)
 CREATE TABLE items (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    google_id VARCHAR(255) UNIQUE NULL,
     type ENUM('book', 'magazine') NOT NULL,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     description TEXT,
     cover_image VARCHAR(500),
     genre_id INT,
+    language VARCHAR(10) NULL,
     publication_year INT,
     page_count INT,
     view_count INT DEFAULT 0,
     rating_score DECIMAL(3,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE SET NULL
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE SET NULL,
+    INDEX idx_google_id (google_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Reviews Table
@@ -81,6 +84,17 @@ CREATE TABLE follows (
     PRIMARY KEY (follower_id, following_id),
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Favorites Table
+CREATE TABLE IF NOT EXISTS favorites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    item_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_favorite (user_id, item_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Insert 15 Genres with Color Codes

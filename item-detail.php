@@ -553,11 +553,8 @@ require_once 'includes/header.php';
                 </p>
 
                 <div class="item-actions">
-                    <button class="btn btn-primary btn-lg">
-                        <i class="fas fa-book-open"></i> Hemen Oku
-                    </button>
-                    <button class="btn btn-outline-primary btn-lg">
-                        <i class="fas fa-bookmark"></i> Listeme Ekle
+                    <button id="btnFavorite" class="btn btn-primary btn-lg" onclick="toggleFavorite()">
+                        <i class="fas fa-heart"></i> Favorilere Ekle
                     </button>
                     <button class="btn btn-secondary btn-lg">
                         <i class="fas fa-share-alt"></i> Paylaş
@@ -679,7 +676,99 @@ require_once 'includes/header.php';
                 themeIcon.className = newTheme === 'dark' ? 'fas fa-moon theme-icon' : 'fas fa-sun theme-icon';
             });
         }
+
+        // Check initial favorite status
+        checkFavoriteStatus();
     });
+
+    // Toggle Favorite Function
+    function toggleFavorite() {
+        const itemId = <?php echo $item_id; ?>;
+        const googleId = '<?php echo $item['google_id'] ?? ''; ?>';
+        const btn = document.getElementById('btnFavorite');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> İşleniyor...';
+
+        const data = {
+            item_id: itemId,
+            google_id: googleId,
+            title: '<?php echo addslashes($item['title']); ?>',
+            author: '<?php echo addslashes($item['author']); ?>',
+            description: '<?php echo addslashes($item['description'] ?? ''); ?>',
+            cover_image: '<?php echo addslashes($item['cover_image']); ?>',
+            language: '<?php echo $item['language'] ?? 'en'; ?>'
+        };
+
+        fetch('/lonely_eye/api/toggle_favorite.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                if (result.is_favorite) {
+                    btn.className = 'btn btn-danger btn-lg';
+                    btn.innerHTML = '<i class="fas fa-heart"></i> Favorilerden Çıkar';
+                } else {
+                    btn.className = 'btn btn-primary btn-lg';
+                    btn.innerHTML = '<i class="fas fa-heart"></i> Favorilere Ekle';
+                }
+                
+                // Show success message
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message || 'Bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Bir hata oluştu', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+    }
+
+    // Check if book is already favorited
+    function checkFavoriteStatus() {
+        const itemId = <?php echo $item_id; ?>;
+        
+        fetch(`/lonely_eye/api/check_favorite.php?item_id=${itemId}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.is_favorite) {
+                    const btn = document.getElementById('btnFavorite');
+                    btn.className = 'btn btn-danger btn-lg';
+                    btn.innerHTML = '<i class="fas fa-heart"></i> Favorilerden Çıkar';
+                }
+            })
+            .catch(error => console.error('Error checking favorite:', error));
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        const alert = document.createElement('div');
+        alert.className = `alert ${alertClass} fade-in`;
+        alert.style.position = 'fixed';
+        alert.style.top = '20px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
+        
+        document.body.appendChild(alert);
+        
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 3000);
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -389,12 +389,29 @@ require_once 'includes/sidebar.php';
     .message-bubble.sent .message-content {
         background: var(--primary);
         border-color: var(--primary);
-        color: white;
+        color: #ffffff;
+        /* White text for sent messages */
     }
 
     .message-content p {
         margin: 0 0 0.25rem 0;
         line-height: 1.5;
+        color: inherit;
+        /* Inherit color from parent */
+    }
+
+    /* Ensure received messages use theme text color */
+    .message-bubble.received .message-content {
+        color: var(--text-main);
+    }
+
+    .message-bubble.received .message-content p {
+        color: var(--text-main);
+    }
+
+    /* Ensure sent messages have white text */
+    .message-bubble.sent .message-content p {
+        color: #ffffff;
     }
 
     .message-time {

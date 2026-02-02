@@ -298,6 +298,18 @@ require_once 'includes/header.php';
         <p>Binlerce kitap arasından keşfet, oku, paylaş</p>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-section mb-4">
+        <div class="input-group input-group-lg">
+            <span class="input-group-text" style="background: var(--bg-card); border-color: var(--border-color);">
+                <i class="fas fa-search" style="color: var(--primary);"></i>
+            </span>
+            <input type="text" id="searchInput" class="form-control form-control-lg"
+                placeholder="Kitap veya yazar ara..."
+                style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-main);">
+        </div>
+    </div>
+
     <!-- Language Filter -->
     <div class="categories-section">
         <h2><i class="fas fa-language"></i> Dil / Menşei</h2>
@@ -392,11 +404,15 @@ require_once 'includes/header.php';
     let hasMore = true;
     const category = '<?php echo addslashes($selected_category); ?>';
     let selectedLang = ''; // Language filter
+    let searchQuery = ''; // Search query
+    let searchTimeout = null;
 
     // Language Filter Buttons
     document.addEventListener('DOMContentLoaded', function () {
         const langFilters = document.querySelectorAll('.lang-filter');
+        const searchInput = document.getElementById('searchInput');
 
+        // Language filter handling
         langFilters.forEach(button => {
             button.addEventListener('click', function () {
                 // Remove active from all
@@ -413,13 +429,28 @@ require_once 'includes/header.php';
                 selectedLang = this.getAttribute('data-lang');
 
                 // Reset and reload
-                currentPage = 1;
-                hasMore = true;
-                document.getElementById('booksGrid').innerHTML = '';
-                loadMoreBooks();
+                resetAndReload();
             });
         });
+
+        // Search input handling with debounce
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchQuery = this.value.trim();
+                    resetAndReload();
+                }, 500); // 500ms debounce
+            });
+        }
     });
+
+    function resetAndReload() {
+        currentPage = 1;
+        hasMore = true;
+        document.getElementById('booksGrid').innerHTML = '';
+        loadMoreBooks();
+    }
 
     window.addEventListener('scroll', function () {
         if (isLoading || !hasMore) return;
@@ -434,8 +465,9 @@ require_once 'includes/header.php';
     });
 
     function loadMoreBooks() {
+        if (isLoading || !hasMore) return;
+
         isLoading = true;
-        currentPage++;
 
         const loadingIndicator = document.getElementById('loadingIndicator');
         loadingIndicator.classList.add('active');
@@ -447,10 +479,17 @@ require_once 'includes/header.php';
         if (selectedLang) {
             url += `&lang=${encodeURIComponent(selectedLang)}`;
         }
+        if (searchQuery) {
+            url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        console.log('Loading page:', currentPage, 'URL:', url);
 
         fetch(url)
             .then(response => response.json())
             .then(data => {
+                console.log('API Response:', data);
+
                 if (data.success && data.books && data.books.length > 0) {
                     const booksGrid = document.getElementById('booksGrid');
 
@@ -458,6 +497,9 @@ require_once 'includes/header.php';
                         const card = createBookCard(book);
                         booksGrid.appendChild(card);
                     });
+
+                    // Increment page for next load
+                    currentPage++;
 
                     // Check if there are more books
                     if (!data.has_more || data.books.length < 40) {
@@ -478,11 +520,19 @@ require_once 'includes/header.php';
     }
 
     function createBookCard(book) {
-        const card = document.createElement(book.source === 'database' ? 'a' : 'div');
+        // Create clickable link for database books, div for Google books
+        const card = document.createElement(book.id > 0 ? 'a' : 'div');
         card.className = 'item-card-modern';
 
-        if (book.source === 'database') {
+        if (book.id > 0) {
+            // Database book - make it clickable
             card.href = `item-detail.php?id=${book.id}`;
+        } else if (book.google_id) {
+            // Google book - make it clickable with google_id
+            card.style.cursor = 'pointer';
+            card.onclick = function () {
+                window.location.href = `item-detail.php?google_id=${book.google_id}`;
+            };
         }
 
         card.innerHTML = `

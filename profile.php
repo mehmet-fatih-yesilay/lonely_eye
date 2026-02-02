@@ -599,7 +599,64 @@ require_once 'includes/header.php';
                 setTimeout(() => alert.remove(), 300);
             }, 5000);
         });
+
+        // Load statistics when modals open
+        const followersModal = document.getElementById('followersModal');
+        const followingModal = document.getElementById('followingModal');
+        
+        if (followersModal) {
+            followersModal.addEventListener('show.bs.modal', function () {
+                loadStatsList('followers', 'followersList');
+            });
+        }
+        
+        if (followingModal) {
+            followingModal.addEventListener('show.bs.modal', function () {
+                loadStatsList('following', 'followingList');
+            });
+        }
     });
+
+    // Load statistics list
+    function loadStatsList(type, listId) {
+        const list = document.getElementById(listId);
+        const userId = <?php echo $user_id; ?>;
+        
+        fetch(`/lonely_eye/api/get_stats_list.php?type=${type}&user_id=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    list.innerHTML = '';
+                    data.data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'border-bottom pb-3 mb-3';
+                        li.style.borderColor = 'var(--border-color)';
+                        
+                        li.innerHTML = `
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="${item.avatar}" alt="${item.username}" 
+                                     style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--primary);">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0" style="color: var(--text-main);">
+                                        <a href="profile.php?id=${item.id}" style="text-decoration: none; color: var(--primary);">
+                                            ${item.username}
+                                        </a>
+                                    </h6>
+                                    <p class="mb-0 small" style="color: var(--text-muted);">${item.bio || 'Henüz biyografi eklenmemiş'}</p>
+                                </div>
+                            </div>
+                        `;
+                        list.appendChild(li);
+                    });
+                } else {
+                    list.innerHTML = '<li class="text-center text-muted py-3">Henüz kimse yok</li>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+                list.innerHTML = '<li class="text-center text-danger py-3">Yüklenirken hata oluştu</li>';
+            });
+    }
 
     // Profile photo upload
     const profilePhotoInput = document.getElementById('profilePhotoInput');
@@ -647,7 +704,11 @@ require_once 'includes/header.php';
                     style="filter: invert(1);"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted text-center">Takipçi listesi yakında eklenecek...</p>
+                <ul id="followersList" class="list-unstyled" style="max-height: 400px; overflow-y: auto;">
+                    <li class="text-center text-muted py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -665,7 +726,11 @@ require_once 'includes/header.php';
                     style="filter: invert(1);"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted text-center">Takip edilen listesi yakında eklenecek...</p>
+                <ul id="followingList" class="list-unstyled" style="max-height: 400px; overflow-y: auto;">
+                    <li class="text-center text-muted py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
