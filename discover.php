@@ -136,12 +136,21 @@ require_once 'includes/header.php';
         text-align: center;
         transition: all 0.3s ease;
         box-shadow: var(--shadow-md);
+        cursor: pointer;
+        position: relative;
     }
 
     .user-card:hover {
         transform: translateY(-8px);
         box-shadow: var(--shadow-lg);
         border-color: var(--primary);
+        background: var(--bg-glass);
+    }
+
+    .user-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
     }
 
     .user-avatar {
@@ -246,22 +255,8 @@ require_once 'includes/header.php';
     }
 
     .btn-profile {
-        padding: 0.75rem;
-        background: var(--bg-glass);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        color: var(--text-main);
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-profile:hover {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
+        display: none;
+        /* Hidden - entire card is now clickable */
     }
 
     /* Empty State */
@@ -327,7 +322,8 @@ require_once 'includes/header.php';
     <?php else: ?>
         <div class="users-grid" id="usersGrid">
             <?php foreach ($users as $user): ?>
-                <div class="user-card" data-username="<?php echo htmlspecialchars($user['username']); ?>">
+                <div class="user-card" data-username="<?php echo htmlspecialchars($user['username']); ?>"
+                    onclick="window.location.href='profile.php?id=<?php echo $user['id']; ?>'">
                     <!-- Avatar -->
                     <div class="user-avatar">
                         <?php if (!empty($user['avatar']) && file_exists($user['avatar'])): ?>
@@ -359,10 +355,10 @@ require_once 'includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Actions -->
+                    <!-- Actions - Only follow button, clicking card goes to profile -->
                     <div class="user-actions">
                         <button class="btn btn-primary btn-follow <?php echo $user['is_following'] ? 'following' : ''; ?>"
-                            onclick="toggleFollow(<?php echo $user['id']; ?>, this)">
+                            onclick="event.stopPropagation(); toggleFollow(<?php echo $user['id']; ?>, this)">
                             <?php if ($user['is_following']): ?>
                                 <i class="fas fa-user-check"></i>
                                 Takip Ediliyor
@@ -371,9 +367,6 @@ require_once 'includes/header.php';
                                 Takip Et
                             <?php endif; ?>
                         </button>
-                        <a href="profile.php?id=<?php echo $user['id']; ?>" class="btn-profile" title="Profili Görüntüle">
-                            <i class="fas fa-eye"></i>
-                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>

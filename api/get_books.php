@@ -28,14 +28,14 @@ try {
     // Calculate offset
     $offset = ($page - 1) * $limit;
 
-    // Build SQL query
+    // Build SQL query - Handle both books and magazines
     $sql = "SELECT i.id, i.title, i.author, i.cover_image as image, 
                    i.rating_score as rating, i.description,
                    i.publication_year as publishedDate, i.page_count as pageCount,
-                   g.name as categories
+                   g.name as categories, i.type
             FROM items i
             LEFT JOIN genres g ON i.genre_id = g.id
-            WHERE i.type = 'book'";
+            WHERE 1=1";
 
     $params = [];
 
@@ -50,8 +50,16 @@ try {
 
     // Add category filter
     if ($category && $category !== 'Tümü') {
-        $sql .= " AND g.name = ?";
-        $params[] = $category;
+        // Special handling for "Dergi" category - filter by type
+        if ($category === 'Dergi') {
+            $sql .= " AND i.type = 'magazine'";
+        } else {
+            $sql .= " AND g.name = ? AND i.type = 'book'";
+            $params[] = $category;
+        }
+    } else {
+        // Default: show only books (not magazines) when no category selected
+        $sql .= " AND i.type = 'book'";
     }
 
     // Add ordering and pagination
@@ -71,9 +79,17 @@ try {
         $book['pageCount'] = (int) $book['pageCount'];
         $book['source'] = 'database';
 
-        // Ensure image URL is set
-        if (empty($book['image'])) {
-            $book['image'] = 'https://via.placeholder.com/128x192.png?text=No+Cover';
+        // Fix broken placeholder URLs
+        if (
+            empty($book['image']) ||
+            strpos($book['image'], 'via.placeholder.com') !== false ||
+            strpos($book['image'], 'source.unsplash.com') !== false
+        ) {
+            // Generate a better placeholder using ui-avatars
+            $initials = substr($book['title'], 0, 2);
+            $colors = ['1e40af', '7c3aed', 'be185d', 'b91c1c', 'c2410c', '15803d', '0e7490'];
+            $color = $colors[array_rand($colors)];
+            $book['image'] = "https://ui-avatars.com/api/?name=" . urlencode($initials) . "&background={$color}&color=fff&size=192&bold=true";
         }
     }
 

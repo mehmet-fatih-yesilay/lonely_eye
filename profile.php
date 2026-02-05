@@ -49,6 +49,14 @@ $stmt = $pdo->prepare("SELECT COUNT(*) as favorite_count FROM favorites WHERE us
 $stmt->execute([$user_id]);
 $favorite_stats = $stmt->fetch();
 
+// Check if current user is following this profile (for other user's profile)
+$is_following = false;
+if (!$is_own_profile) {
+    $stmt = $pdo->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?");
+    $stmt->execute([$_SESSION['user_id'], $user_id]);
+    $is_following = $stmt->fetch() !== false;
+}
+
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $avatar = trim($_POST['avatar'] ?? '');
@@ -100,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     }
 }
 
-$page_title = "Profilim";
+$page_title = $is_own_profile ? "Profilim" : htmlspecialchars($user['username']) . " - Profil";
 require_once 'includes/header.php';
 ?>
 
@@ -402,6 +410,75 @@ require_once 'includes/header.php';
             white-space: nowrap;
         }
     }
+
+    /* Other User Profile Styles */
+    .profile-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-follow-profile {
+        padding: 0.875rem 2rem;
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-follow-profile.following {
+        background: var(--bg-glass);
+        color: var(--text-main);
+        border: 2px solid var(--border-color);
+    }
+
+    .btn-follow-profile.following:hover {
+        background: #ff0055;
+        color: white;
+        border-color: #ff0055;
+    }
+
+    .btn-message-profile {
+        padding: 0.875rem 2rem;
+        background: var(--bg-glass);
+        border: 2px solid var(--primary);
+        border-radius: var(--radius-lg);
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-message-profile:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .other-profile-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid #7c3aed;
+        border-radius: var(--radius-lg);
+        color: #7c3aed;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-left: 0.5rem;
+    }
 </style>
 
 <!-- Sidebar -->
@@ -434,6 +511,11 @@ require_once 'includes/header.php';
         <img src="<?php echo htmlspecialchars($user['avatar']); ?>" alt="Avatar" class="profile-avatar">
         <h2>
             <?php echo htmlspecialchars($user['username']); ?>
+            <?php if (!$is_own_profile): ?>
+                <span class="other-profile-badge">
+                    <i class="fas fa-user"></i> Kullanıcı Profili
+                </span>
+            <?php endif; ?>
         </h2>
         <p class="member-since">
             <i class="fas fa-calendar"></i>
@@ -444,16 +526,36 @@ require_once 'includes/header.php';
             <i class="fas fa-<?php echo $user['role'] === 'admin' ? 'crown' : 'user'; ?>"></i>
             <?php echo $user['role'] === 'admin' ? 'Yönetici' : 'Okuyucu'; ?>
         </span>
+
+        <?php if (!$is_own_profile): ?>
+            <!-- Actions for other user's profile -->
+            <div class="profile-actions">
+                <button class="btn btn-primary btn-follow-profile <?php echo $is_following ? 'following' : ''; ?>"
+                    onclick="toggleFollowProfile(<?php echo $user_id; ?>, this)">
+                    <?php if ($is_following): ?>
+                        <i class="fas fa-user-check"></i> Takip Ediliyor
+                    <?php else: ?>
+                        <i class="fas fa-user-plus"></i> Takip Et
+                    <?php endif; ?>
+                </button>
+                <a href="messages.php?user_id=<?php echo $user_id; ?>" class="btn-message-profile">
+                    <i class="fas fa-envelope"></i> Mesaj Gönder
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Tabs -->
     <div class="profile-tabs">
         <button class="tab-button active" data-tab="about">
-            <i class="fas fa-info-circle"></i> Hakkımda
+            <i class="fas fa-info-circle"></i>
+            <?php echo $is_own_profile ? 'Hakkımda' : 'Hakkında'; ?>
         </button>
-        <button class="tab-button" data-tab="settings">
-            <i class="fas fa-cog"></i> Ayarlar
-        </button>
+        <?php if ($is_own_profile): ?>
+            <button class="tab-button" data-tab="settings">
+                <i class="fas fa-cog"></i> Ayarlar
+            </button>
+        <?php endif; ?>
     </div>
 
     <!-- About Tab -->
@@ -467,7 +569,7 @@ require_once 'includes/header.php';
                     <h3>
                         <?php echo number_format($stats['review_count']); ?>
                     </h3>
-                    <p>Yorumlarım</p>
+                    <p><?php echo $is_own_profile ? 'Yorumlarım' : 'Yorumları'; ?></p>
                 </div>
                 <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followersModal"
                     title="Takipçileri Görüntüle">
@@ -490,7 +592,7 @@ require_once 'includes/header.php';
             </div>
 
             <div class="bio-section">
-                <h4><i class="fas fa-user-circle"></i> Biyografi</h4>
+                <h4><i class="fas fa-user-circle"></i> <?php echo $is_own_profile ? 'Biyografi' : 'Hakkında'; ?></h4>
                 <p>
                     <?php echo $user['bio'] ? nl2br(htmlspecialchars($user['bio'])) : 'Henüz bir biyografi eklenmemiş.'; ?>
                 </p>
@@ -498,70 +600,72 @@ require_once 'includes/header.php';
         </div>
     </div>
 
-    <!-- Settings Tab -->
-    <div class="tab-content" id="settings">
-        <div class="settings-section">
-            <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
-                <!-- Profile Settings -->
-                <div class="settings-group">
-                    <h4><i class="fas fa-user-edit"></i> Profil Bilgileri</h4>
+    <!-- Settings Tab (only for own profile) -->
+    <?php if ($is_own_profile): ?>
+        <div class="tab-content" id="settings">
+            <div class="settings-section">
+                <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
+                    <!-- Profile Settings -->
+                    <div class="settings-group">
+                        <h4><i class="fas fa-user-edit"></i> Profil Bilgileri</h4>
 
-                    <div class="form-group">
-                        <label class="form-label">Profil Fotoğrafı</label>
-                        <input type="file" name="profile_photo" id="profilePhotoInput" class="form-control"
-                            accept="image/*">
-                        <small class="text-muted">JPG, PNG, GIF veya WebP formatında, maksimum 5MB</small>
+                        <div class="form-group">
+                            <label class="form-label">Profil Fotoğrafı</label>
+                            <input type="file" name="profile_photo" id="profilePhotoInput" class="form-control"
+                                accept="image/*">
+                            <small class="text-muted">JPG, PNG, GIF veya WebP formatında, maksimum 5MB</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Avatar URL (Alternatif)</label>
+                            <input type="url" name="avatar" class="form-control"
+                                value="<?php echo htmlspecialchars($user['avatar']); ?>"
+                                placeholder="https://example.com/avatar.jpg">
+                            <small class="text-muted">Veya profil resminizin URL adresini girin</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Biyografi</label>
+                            <textarea name="bio" class="form-control" rows="4"
+                                placeholder="Kendiniz hakkında birkaç şey yazın..."><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Avatar URL (Alternatif)</label>
-                        <input type="url" name="avatar" class="form-control"
-                            value="<?php echo htmlspecialchars($user['avatar']); ?>"
-                            placeholder="https://example.com/avatar.jpg">
-                        <small class="text-muted">Veya profil resminizin URL adresini girin</small>
+                    <!-- Password Settings -->
+                    <div class="settings-group">
+                        <h4><i class="fas fa-lock"></i> Şifre Değiştir</h4>
+
+                        <div class="form-group">
+                            <label class="form-label">Eski Şifre</label>
+                            <input type="password" name="old_password" class="form-control"
+                                placeholder="Mevcut şifrenizi girin">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Yeni Şifre</label>
+                            <input type="password" name="new_password" class="form-control" placeholder="En az 6 karakter">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Yeni Şifre Tekrar</label>
+                            <input type="password" name="confirm_password" class="form-control"
+                                placeholder="Yeni şifrenizi tekrar girin">
+                        </div>
+
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Şifre değiştirmek istemiyorsanız bu alanları boş bırakın.
+                        </small>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Biyografi</label>
-                        <textarea name="bio" class="form-control" rows="4"
-                            placeholder="Kendiniz hakkında birkaç şey yazın..."><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
-                    </div>
-                </div>
-
-                <!-- Password Settings -->
-                <div class="settings-group">
-                    <h4><i class="fas fa-lock"></i> Şifre Değiştir</h4>
-
-                    <div class="form-group">
-                        <label class="form-label">Eski Şifre</label>
-                        <input type="password" name="old_password" class="form-control"
-                            placeholder="Mevcut şifrenizi girin">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Yeni Şifre</label>
-                        <input type="password" name="new_password" class="form-control" placeholder="En az 6 karakter">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Yeni Şifre Tekrar</label>
-                        <input type="password" name="confirm_password" class="form-control"
-                            placeholder="Yeni şifrenizi tekrar girin">
-                    </div>
-
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle"></i>
-                        Şifre değiştirmek istemiyorsanız bu alanları boş bırakın.
-                    </small>
-                </div>
-
-                <!-- Save Button -->
-                <button type="submit" name="update_profile" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Değişiklikleri Kaydet
-                </button>
-            </form>
+                    <!-- Save Button -->
+                    <button type="submit" name="update_profile" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Değişiklikleri Kaydet
+                    </button>
+                </form>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -818,6 +922,47 @@ require_once 'includes/header.php';
                     });
             }
         });
+    }
+
+    // Follow/Unfollow from profile page
+    function toggleFollowProfile(userId, buttonElement) {
+        const isFollowing = buttonElement.classList.contains('following');
+        const action = isFollowing ? 'unfollow' : 'follow';
+
+        fetch('/lonely_eye/api/follow.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                action: action
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (action === 'follow') {
+                        buttonElement.classList.add('following');
+                        buttonElement.innerHTML = '<i class="fas fa-user-check"></i> Takip Ediliyor';
+                    } else {
+                        buttonElement.classList.remove('following');
+                        buttonElement.innerHTML = '<i class="fas fa-user-plus"></i> Takip Et';
+                    }
+                    // Refresh follower count
+                    const followerStat = document.querySelector('.stat-card:nth-child(2) h3');
+                    if (followerStat) {
+                        const currentCount = parseInt(followerStat.textContent.replace(/,/g, ''));
+                        followerStat.textContent = (action === 'follow' ? currentCount + 1 : currentCount - 1).toLocaleString('tr-TR');
+                    }
+                } else {
+                    alert('İşlem başarısız: ' + (data.message || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu.');
+            });
     }
 </script>
 
