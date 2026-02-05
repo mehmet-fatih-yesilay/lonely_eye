@@ -34,64 +34,21 @@ $genres = $stmt->fetchAll();
 
 // ============================================
 // SMART CONTENT ALGORITHM
-// Ensures minimum 12 items displayed
+// Load initial books from database
 // ============================================
 $min_items = 12;
 $items = [];
 
-// STEP A: Fetch from database
+// Fetch from database
 $stmt = $pdo->query("
     SELECT i.*, g.name as genre_name, g.color_code 
     FROM items i 
     LEFT JOIN genres g ON i.genre_id = g.id 
-    ORDER BY i.created_at DESC 
+    WHERE i.type = 'book'
+    ORDER BY RAND()
     LIMIT $min_items
 ");
-$db_items = $stmt->fetchAll();
-$items = $db_items;
-
-// STEP B & C: Fill with Google Books API if needed
-$items_needed = $min_items - count($items);
-
-if ($items_needed > 0) {
-    // Fetch from Google Books API (max 40 items)
-    $api_max = min($items_needed, 40); // API limit is 40
-    $api_url = "https://www.googleapis.com/books/v1/volumes?q=bestseller&orderBy=relevance&maxResults=$api_max&langRestrict=tr";
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $api_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($http_code === 200 && $response) {
-        $data = json_decode($response, true);
-
-        if (isset($data['items']) && !empty($data['items'])) {
-            foreach ($data['items'] as $api_item) {
-                $volumeInfo = $api_item['volumeInfo'] ?? [];
-
-                // Create item array compatible with our structure
-                $items[] = [
-                    'id' => 0, // Temporary ID for API items
-                    'title' => $volumeInfo['title'] ?? 'Untitled',
-                    'author' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : 'Unknown',
-                    'cover_image' => str_replace('http://', 'https://', $volumeInfo['imageLinks']['thumbnail'] ?? 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=300&h=450&fit=crop'),
-                    'rating_score' => rand(35, 50) / 10,
-                    'genre_name' => 'Genel',
-                    'is_api' => true // Flag to identify API items
-                ];
-
-                if (count($items) >= $min_items)
-                    break;
-            }
-        }
-    }
-}
+$items = $stmt->fetchAll();
 
 $page_title = "Ana Sayfa";
 require_once 'includes/header.php';
@@ -497,35 +454,18 @@ require_once 'includes/header.php';
         <h2><i class="fas fa-clock"></i> Son Eklenenler</h2>
         <div class="items-grid" id="itemsGrid">
             <?php foreach ($items as $item): ?>
-                <?php if (isset($item['is_api']) && $item['is_api']): ?>
-                    <!-- API Item (No link, just display) -->
-                    <div class="item-card-modern">
-                        <img src="<?php echo htmlspecialchars($item['cover_image']); ?>"
-                            alt="<?php echo htmlspecialchars($item['title']); ?>">
-                        <div class="item-card-modern-body">
-                            <h6><?php echo htmlspecialchars($item['title']); ?></h6>
-                            <p class="author"><?php echo htmlspecialchars($item['author']); ?></p>
-                            <div class="rating">
-                                <i class="fas fa-star"></i>
-                                <span><?php echo number_format($item['rating_score'], 1); ?></span>
-                            </div>
+                <a href="item-detail.php?id=<?php echo $item['id']; ?>" class="item-card-modern">
+                    <img src="<?php echo htmlspecialchars($item['cover_image']); ?>"
+                        alt="<?php echo htmlspecialchars($item['title']); ?>">
+                    <div class="item-card-modern-body">
+                        <h6><?php echo htmlspecialchars($item['title']); ?></h6>
+                        <p class="author"><?php echo htmlspecialchars($item['author']); ?></p>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <span><?php echo number_format($item['rating_score'], 1); ?></span>
                         </div>
                     </div>
-                <?php else: ?>
-                    <!-- Database Item (With link) -->
-                    <a href="item-detail.php?id=<?php echo $item['id']; ?>" class="item-card-modern">
-                        <img src="<?php echo htmlspecialchars($item['cover_image']); ?>"
-                            alt="<?php echo htmlspecialchars($item['title']); ?>">
-                        <div class="item-card-modern-body">
-                            <h6><?php echo htmlspecialchars($item['title']); ?></h6>
-                            <p class="author"><?php echo htmlspecialchars($item['author']); ?></p>
-                            <div class="rating">
-                                <i class="fas fa-star"></i>
-                                <span><?php echo number_format($item['rating_score'], 1); ?></span>
-                            </div>
-                        </div>
-                    </a>
-                <?php endif; ?>
+                </a>
             <?php endforeach; ?>
         </div>
 

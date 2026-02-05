@@ -60,6 +60,20 @@ try {
             $results = $stmt->fetchAll();
             break;
 
+        case 'comments':
+            // Get user's comments with book info
+            $stmt = $pdo->prepare("
+                SELECT r.id, r.comment, r.rating, r.created_at,
+                       i.id as item_id, i.title, i.author, i.cover_image
+                FROM reviews r
+                INNER JOIN items i ON r.item_id = i.id
+                WHERE r.user_id = ?
+                ORDER BY r.created_at DESC
+            ");
+            $stmt->execute([$user_id]);
+            $results = $stmt->fetchAll();
+            break;
+
         default:
             echo json_encode(['success' => false, 'message' => 'Geçersiz tip']);
             exit;

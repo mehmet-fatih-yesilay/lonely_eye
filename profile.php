@@ -44,6 +44,11 @@ $stmt = $pdo->prepare("SELECT COUNT(*) as following_count FROM follows WHERE fol
 $stmt->execute([$user_id]);
 $following_stats = $stmt->fetch();
 
+// Fetch favorites count
+$stmt = $pdo->prepare("SELECT COUNT(*) as favorite_count FROM favorites WHERE user_id = ?");
+$stmt->execute([$user_id]);
+$favorite_stats = $stmt->fetch();
+
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $avatar = trim($_POST['avatar'] ?? '');
@@ -456,24 +461,31 @@ require_once 'includes/header.php';
         <div class="about-section">
             <h3 class="mb-4"><i class="fas fa-chart-line"></i> İstatistikler</h3>
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#commentsModal"
+                    title="Yorumları Görüntüle">
                     <i class="fas fa-comments"></i>
                     <h3>
                         <?php echo number_format($stats['review_count']); ?>
                     </h3>
-                    <p>Toplam Yorum</p>
+                    <p>Yorumlarım</p>
                 </div>
                 <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followersModal"
                     title="Takipçileri Görüntüle">
                     <i class="fas fa-users"></i>
                     <h3><?php echo number_format($follower_stats['follower_count']); ?></h3>
-                    <p>Takipçi</p>
+                    <p>Takipçiler</p>
                 </div>
                 <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followingModal"
                     title="Takip Edilenleri Görüntüle">
                     <i class="fas fa-user-friends"></i>
                     <h3><?php echo number_format($following_stats['following_count']); ?></h3>
-                    <p>Takip Edilen</p>
+                    <p>Takipler</p>
+                </div>
+                <div class="stat-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#favoritesModal"
+                    title="Favorileri Görüntüle">
+                    <i class="fas fa-heart"></i>
+                    <h3><?php echo number_format($favorite_stats['favorite_count']); ?></h3>
+                    <p>Favoriler</p>
                 </div>
             </div>
 
@@ -603,16 +615,30 @@ require_once 'includes/header.php';
         // Load statistics when modals open
         const followersModal = document.getElementById('followersModal');
         const followingModal = document.getElementById('followingModal');
-        
+        const favoritesModal = document.getElementById('favoritesModal');
+        const commentsModal = document.getElementById('commentsModal');
+
         if (followersModal) {
             followersModal.addEventListener('show.bs.modal', function () {
                 loadStatsList('followers', 'followersList');
             });
         }
-        
+
         if (followingModal) {
             followingModal.addEventListener('show.bs.modal', function () {
                 loadStatsList('following', 'followingList');
+            });
+        }
+
+        if (favoritesModal) {
+            favoritesModal.addEventListener('show.bs.modal', function () {
+                loadFavoritesList();
+            });
+        }
+
+        if (commentsModal) {
+            commentsModal.addEventListener('show.bs.modal', function () {
+                loadCommentsList();
             });
         }
     });
@@ -621,7 +647,7 @@ require_once 'includes/header.php';
     function loadStatsList(type, listId) {
         const list = document.getElementById(listId);
         const userId = <?php echo $user_id; ?>;
-        
+
         fetch(`/lonely_eye/api/get_stats_list.php?type=${type}&user_id=${userId}`)
             .then(response => response.json())
             .then(data => {
@@ -631,7 +657,7 @@ require_once 'includes/header.php';
                         const li = document.createElement('li');
                         li.className = 'border-bottom pb-3 mb-3';
                         li.style.borderColor = 'var(--border-color)';
-                        
+
                         li.innerHTML = `
                             <div class="d-flex align-items-center gap-3">
                                 <img src="${item.avatar}" alt="${item.username}" 
@@ -654,6 +680,109 @@ require_once 'includes/header.php';
             })
             .catch(error => {
                 console.error('Error loading stats:', error);
+                list.innerHTML = '<li class="text-center text-danger py-3">Yüklenirken hata oluştu</li>';
+            });
+    }
+
+    // Load favorites list
+    function loadFavoritesList() {
+        const list = document.getElementById('favoritesList');
+        const userId = <?php echo $user_id; ?>;
+
+        fetch(`/lonely_eye/api/get_stats_list.php?type=favorites&user_id=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    list.innerHTML = '';
+                    data.data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'col-md-6 mb-3';
+
+                        div.innerHTML = `
+                            <div class="card h-100" style="background: var(--bg-glass); border: 1px solid var(--border-color);">
+                                <div class="row g-0">
+                                    <div class="col-4">
+                                        <img src="${item.cover_image}" class="img-fluid rounded-start" alt="${item.title}"
+                                             style="height: 150px; object-fit: cover; width: 100%;">
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="card-body">
+                                            <h6 class="card-title" style="color: var(--text-main);">
+                                                <a href="item-detail.php?id=${item.id}" style="text-decoration: none; color: var(--primary);">
+                                                    ${item.title}
+                                                </a>
+                                            </h6>
+                                            <p class="card-text small" style="color: var(--text-muted);">${item.author}</p>
+                                            <p class="card-text">
+                                                <small style="color: #FFD700;">
+                                                    ${'★'.repeat(Math.floor(item.rating_score))}${'☆'.repeat(5 - Math.floor(item.rating_score))}
+                                                    ${parseFloat(item.rating_score).toFixed(1)}
+                                                </small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-heart fa-3x mb-3"></i><p>Henüz favori kitap yok</p></div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading favorites:', error);
+                list.innerHTML = '<div class="col-12 text-center text-danger py-3">Yüklenirken hata oluştu</div>';
+            });
+    }
+
+    // Load comments list
+    function loadCommentsList() {
+        const list = document.getElementById('commentsList');
+        const userId = <?php echo $user_id; ?>;
+
+        fetch(`/lonely_eye/api/get_stats_list.php?type=comments&user_id=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    list.innerHTML = '';
+                    data.data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'border-bottom pb-3 mb-3';
+                        li.style.borderColor = 'var(--border-color)';
+
+                        const date = new Date(item.created_at);
+                        const formattedDate = date.toLocaleDateString('tr-TR');
+
+                        li.innerHTML = `
+                            <div class="d-flex gap-3">
+                                <img src="${item.cover_image}" alt="${item.title}" 
+                                     style="width: 60px; height: 90px; border-radius: 8px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1" style="color: var(--text-main);">
+                                        <a href="item-detail.php?id=${item.item_id}" style="text-decoration: none; color: var(--primary);">
+                                            ${item.title}
+                                        </a>
+                                    </h6>
+                                    <p class="mb-1 small" style="color: var(--text-muted);">${item.author}</p>
+                                    <div class="mb-2">
+                                        <small style="color: #FFD700;">
+                                            ${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}
+                                        </small>
+                                        <small style="color: var(--text-muted);"> • ${formattedDate}</small>
+                                    </div>
+                                    <p class="mb-0 small" style="color: var(--text-muted);">${item.comment.substring(0, 100)}${item.comment.length > 100 ? '...' : ''}</p>
+                                </div>
+                            </div>
+                        `;
+                        list.appendChild(li);
+                    });
+                } else {
+                    list.innerHTML = '<li class="text-center text-muted py-5"><i class="fas fa-comments fa-3x mb-3"></i><p>Henüz yorum yapılmamış</p></li>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
                 list.innerHTML = '<li class="text-center text-danger py-3">Yüklenirken hata oluştu</li>';
             });
     }
@@ -727,6 +856,50 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-body">
                 <ul id="followingList" class="list-unstyled" style="max-height: 400px; overflow-y: auto;">
+                    <li class="text-center text-muted py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Favorites Modal -->
+<div class="modal fade" id="favoritesModal" tabindex="-1" aria-labelledby="favoritesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                <h5 class="modal-title" id="favoritesModalLabel">
+                    <i class="fas fa-heart"></i> Favori Kitaplar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <div id="favoritesList" class="row" style="max-height: 500px; overflow-y: auto;">
+                    <div class="col-12 text-center text-muted py-3">
+                        <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comments Modal -->
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                <h5 class="modal-title" id="commentsModalLabel">
+                    <i class="fas fa-comments"></i> Yorumlarım
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="commentsList" class="list-unstyled" style="max-height: 500px; overflow-y: auto;">
                     <li class="text-center text-muted py-3">
                         <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
                     </li>

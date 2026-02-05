@@ -97,6 +97,22 @@ CREATE TABLE IF NOT EXISTS favorites (
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Comment Replies Table (Instagram-style nested replies)
+CREATE TABLE comment_replies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    review_id INT NOT NULL,
+    parent_reply_id INT NULL,
+    user_id INT NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_reply_id) REFERENCES comment_replies(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_review_id (review_id),
+    INDEX idx_parent_reply_id (parent_reply_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 -- Insert 15 Genres with Color Codes
 INSERT INTO genres (name, color_code) VALUES
 ('Roman', '#FF6B6B'),

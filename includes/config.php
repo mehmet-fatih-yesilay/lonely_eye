@@ -68,8 +68,8 @@ $GLOBALS['CATEGORY_MAP'] = [
 // ============================================
 // DEBUG MODE
 // ============================================
-define('DEBUG_MODE', true); // Set to false in production
-define('SHOW_CONSOLE_LOGS', true); // JavaScript console.log visibility
+define('DEBUG_MODE', false); // Set to false in production
+define('SHOW_CONSOLE_LOGS', false); // JavaScript console.log visibility
 
 // ============================================
 // ERROR REPORTING

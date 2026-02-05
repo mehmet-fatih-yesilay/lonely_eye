@@ -409,6 +409,92 @@ require_once 'includes/header.php';
         line-height: 1.6;
     }
 
+    /* Reply Styles */
+    .reply-btn {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .reply-form-container {
+        background: var(--bg-glass);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+    }
+
+    .reply-input {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        resize: none;
+    }
+
+    .reply-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+    }
+
+    .replies-container {
+        margin-left: 2rem;
+        border-left: 2px solid var(--border-color);
+        padding-left: 1rem;
+    }
+
+    .reply-item {
+        background: var(--bg-glass);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .reply-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .reply-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .reply-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid var(--primary);
+    }
+
+    .reply-username {
+        font-weight: 600;
+        color: var(--text-main);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .reply-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .reply-text {
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .nested-replies {
+        margin-left: 1.5rem;
+        margin-top: 0.75rem;
+        border-left: 2px solid rgba(56, 189, 248, 0.3);
+        padding-left: 1rem;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .sidebar {
@@ -465,11 +551,6 @@ require_once 'includes/header.php';
         <li><a href="messages.php"><i class="fas fa-envelope"></i> Mesajlar</a></li>
         <li><a href="profile.php?id=<?php echo $user_id; ?>"><i class="fas fa-user"></i> Profilim</a></li>
     </ul>
-
-    <button class="theme-toggle w-100 mb-3" style="height: 50px; border-radius: 12px;">
-        <i class="fas fa-moon theme-icon"></i>
-        <span class="ms-2">Tema Değiştir</span>
-    </button>
 
     <a href="logout.php" class="btn btn-outline-primary w-100">
         <i class="fas fa-sign-out-alt"></i> Çıkış Yap
@@ -624,7 +705,7 @@ require_once 'includes/header.php';
                 <?php echo count($reviews); ?>)
             </h4>
             <?php foreach ($reviews as $review): ?>
-                <div class="review-card">
+                <div class="review-card" data-review-id="<?php echo $review['id']; ?>">
                     <div class="review-header">
                         <img src="<?php echo htmlspecialchars($review['avatar']); ?>" alt="Avatar" class="review-avatar">
                         <div class="review-user-info">
@@ -645,6 +726,40 @@ require_once 'includes/header.php';
                     <p class="review-comment">
                         <?php echo nl2br(htmlspecialchars($review['comment'])); ?>
                     </p>
+
+                    <!-- Reply Button -->
+                    <button class="btn btn-sm btn-outline-primary reply-btn"
+                        onclick="toggleReplyForm(<?php echo $review['id']; ?>, null, '<?php echo addslashes($review['username']); ?>')">
+                        <i class="fas fa-reply"></i> Yanıtla
+                    </button>
+
+                    <!-- Reply Form (Hidden by default) -->
+                    <div class="reply-form-container mt-3" id="reply-form-<?php echo $review['id']; ?>-null"
+                        style="display: none;">
+                        <div class="d-flex gap-2">
+                            <img src="<?php echo htmlspecialchars($avatar); ?>" alt="Avatar"
+                                style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary);">
+                            <div class="flex-grow-1">
+                                <textarea class="form-control reply-input" rows="2" placeholder="Yanıtınızı yazın..."
+                                    id="reply-text-<?php echo $review['id']; ?>-null"></textarea>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-primary"
+                                        onclick="postReply(<?php echo $review['id']; ?>, null)">
+                                        <i class="fas fa-paper-plane"></i> Gönder
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary"
+                                        onclick="toggleReplyForm(<?php echo $review['id']; ?>, null)">
+                                        İptal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Replies Container -->
+                    <div class="replies-container mt-3" id="replies-<?php echo $review['id']; ?>">
+                        <!-- Replies will be loaded here -->
+                    </div>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
@@ -686,7 +801,7 @@ require_once 'includes/header.php';
         const itemId = <?php echo $item_id; ?>;
         const googleId = '<?php echo $item['google_id'] ?? ''; ?>';
         const btn = document.getElementById('btnFavorite');
-        
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> İşleniyor...';
 
@@ -707,36 +822,36 @@ require_once 'includes/header.php';
             },
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                if (result.is_favorite) {
-                    btn.className = 'btn btn-danger btn-lg';
-                    btn.innerHTML = '<i class="fas fa-heart"></i> Favorilerden Çıkar';
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    if (result.is_favorite) {
+                        btn.className = 'btn btn-danger btn-lg';
+                        btn.innerHTML = '<i class="fas fa-heart"></i> Favorilerden Çıkar';
+                    } else {
+                        btn.className = 'btn btn-primary btn-lg';
+                        btn.innerHTML = '<i class="fas fa-heart"></i> Favorilere Ekle';
+                    }
+
+                    // Show success message
+                    showNotification(result.message, 'success');
                 } else {
-                    btn.className = 'btn btn-primary btn-lg';
-                    btn.innerHTML = '<i class="fas fa-heart"></i> Favorilere Ekle';
+                    showNotification(result.message || 'Bir hata oluştu', 'error');
                 }
-                
-                // Show success message
-                showNotification(result.message, 'success');
-            } else {
-                showNotification(result.message || 'Bir hata oluştu', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Bir hata oluştu', 'error');
-        })
-        .finally(() => {
-            btn.disabled = false;
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Bir hata oluştu', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
     }
 
     // Check if book is already favorited
     function checkFavoriteStatus() {
         const itemId = <?php echo $item_id; ?>;
-        
+
         fetch(`/lonely_eye/api/check_favorite.php?item_id=${itemId}`)
             .then(response => response.json())
             .then(result => {
@@ -753,7 +868,7 @@ require_once 'includes/header.php';
     function showNotification(message, type) {
         const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
         const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        
+
         const alert = document.createElement('div');
         alert.className = `alert ${alertClass} fade-in`;
         alert.style.position = 'fixed';
@@ -761,13 +876,204 @@ require_once 'includes/header.php';
         alert.style.right = '20px';
         alert.style.zIndex = '9999';
         alert.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
-        
+
         document.body.appendChild(alert);
-        
+
         setTimeout(() => {
             alert.style.opacity = '0';
             setTimeout(() => alert.remove(), 300);
         }, 3000);
+    }
+
+    // ============================================
+    // REPLY SYSTEM FUNCTIONS
+    // ============================================
+
+    // Load replies when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load replies for all reviews
+        const reviews = document.querySelectorAll('[data-review-id]');
+        reviews.forEach(review => {
+            const reviewId = review.getAttribute('data-review-id');
+            loadReplies(reviewId);
+        });
+    });
+
+    // Toggle reply form visibility
+    function toggleReplyForm(reviewId, parentReplyId, username = '') {
+        const formId = `reply-form-${reviewId}-${parentReplyId}`;
+        const form = document.getElementById(formId);
+
+        if (form) {
+            if (form.style.display === 'none') {
+                // Hide all other reply forms first
+                document.querySelectorAll('.reply-form-container').forEach(f => f.style.display = 'none');
+                form.style.display = 'block';
+
+                // Focus on textarea
+                const textarea = form.querySelector('textarea');
+                if (textarea) {
+                    textarea.focus();
+                    if (username && parentReplyId !== null) {
+                        textarea.placeholder = `@${username} kullanıcısına yanıt yazın...`;
+                    }
+                }
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    }
+
+    // Post a reply
+    function postReply(reviewId, parentReplyId) {
+        const textareaId = `reply-text-${reviewId}-${parentReplyId}`;
+        const textarea = document.getElementById(textareaId);
+        const comment = textarea.value.trim();
+
+        if (!comment) {
+            showNotification('Yanıt boş olamaz', 'error');
+            return;
+        }
+
+        if (comment.length > 1000) {
+            showNotification('Yanıt çok uzun (max 1000 karakter)', 'error');
+            return;
+        }
+
+        // Disable textarea and buttons
+        textarea.disabled = true;
+        const buttons = textarea.closest('.reply-form-container').querySelectorAll('button');
+        buttons.forEach(btn => btn.disabled = true);
+
+        fetch('/lonely_eye/api/post_reply.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                review_id: reviewId,
+                parent_reply_id: parentReplyId,
+                comment: comment
+            })
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showNotification('Yanıt başarıyla eklendi', 'success');
+
+                    // Clear textarea
+                    textarea.value = '';
+
+                    // Hide form
+                    toggleReplyForm(reviewId, parentReplyId);
+
+                    // Reload replies
+                    loadReplies(reviewId);
+                } else {
+                    showNotification(result.message || 'Bir hata oluştu', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error posting reply:', error);
+                showNotification('Bir hata oluştu', 'error');
+            })
+            .finally(() => {
+                textarea.disabled = false;
+                buttons.forEach(btn => btn.disabled = false);
+            });
+    }
+
+    // Load replies for a review
+    function loadReplies(reviewId) {
+        const container = document.getElementById(`replies-${reviewId}`);
+        if (!container) return;
+
+        fetch(`/lonely_eye/api/get_replies.php?review_id=${reviewId}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.replies.length > 0) {
+                    container.innerHTML = renderReplies(result.replies, reviewId);
+                } else {
+                    container.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading replies:', error);
+            });
+    }
+
+    // Render replies recursively (Instagram-style nested structure)
+    function renderReplies(replies, reviewId, level = 0) {
+        let html = '';
+
+        replies.forEach(reply => {
+            const date = new Date(reply.created_at);
+            const formattedDate = date.toLocaleDateString('tr-TR', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            html += `
+                <div class="reply-item" data-reply-id="${reply.id}">
+                    <div class="reply-header">
+                        <img src="${reply.avatar}" alt="${reply.username}" class="reply-avatar">
+                        <div>
+                            <p class="reply-username">${reply.username}</p>
+                            <p class="reply-date"><i class="fas fa-clock"></i> ${formattedDate}</p>
+                        </div>
+                    </div>
+                    <p class="reply-text">${escapeHtml(reply.comment)}</p>
+                    
+                    <button class="btn btn-sm btn-outline-primary reply-btn" 
+                            onclick="toggleReplyForm(${reviewId}, ${reply.id}, '${escapeHtml(reply.username)}')">
+                        <i class="fas fa-reply"></i> Yanıtla
+                    </button>
+                    
+                    <!-- Nested Reply Form -->
+                    <div class="reply-form-container mt-2" id="reply-form-${reviewId}-${reply.id}" style="display: none;">
+                        <div class="d-flex gap-2">
+                            <img src="<?php echo htmlspecialchars($avatar); ?>" alt="Avatar" 
+                                 style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--primary);">
+                            <div class="flex-grow-1">
+                                <textarea class="form-control reply-input" rows="2" 
+                                          placeholder="Yanıtınızı yazın..." 
+                                          id="reply-text-${reviewId}-${reply.id}"></textarea>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-primary" 
+                                            onclick="postReply(${reviewId}, ${reply.id})">
+                                        <i class="fas fa-paper-plane"></i> Gönder
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" 
+                                            onclick="toggleReplyForm(${reviewId}, ${reply.id})">
+                                        İptal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            `;
+
+            // Render nested replies
+            if (reply.replies && reply.replies.length > 0) {
+                html += `<div class="nested-replies">`;
+                html += renderReplies(reply.replies, reviewId, level + 1);
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+        });
+
+        return html;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 </script>
 
