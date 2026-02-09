@@ -97,6 +97,16 @@
                                 </span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="/lonely_eye/admin/">
+                                            <i class="fas fa-shield-alt"></i> Yönetim Paneli
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                <?php endif; ?>
                                 <li>
                                     <a class="dropdown-item"
                                         href="/lonely_eye/profile.php?id=<?php echo $_SESSION['user_id']; ?>">

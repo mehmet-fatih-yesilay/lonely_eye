@@ -546,7 +546,7 @@ require_once 'includes/header.php';
 
     <ul class="sidebar-menu">
         <li><a href="dashboard.php"><i class="fas fa-home"></i> Ana Sayfa</a></li>
-        <li><a href="explore.php"><i class="fas fa-compass"></i> Keşfet</a></li>
+        <li><a href="discover.php"><i class="fas fa-users"></i> İnsanları Keşfet</a></li>
         <li><a href="library.php"><i class="fas fa-book"></i> Kitaplığım</a></li>
         <li><a href="messages.php"><i class="fas fa-envelope"></i> Mesajlar</a></li>
         <li><a href="profile.php?id=<?php echo $user_id; ?>"><i class="fas fa-user"></i> Profilim</a></li>

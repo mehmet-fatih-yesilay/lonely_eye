@@ -1,26 +1,28 @@
 <?php
-/**
- * Logout Page - Secure Session Termination
- * Lonely Eye Project
- */
+// Oturumu başlat
+session_start();
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Unset all session variables
+// Tüm oturum değişkenlerini temizle
 $_SESSION = array();
 
-// Destroy the session cookie
-if (isset($_COOKIE[session_name()])) {
-    setcookie(session_name(), '', time() - 3600, '/');
+// Oturum çerezini sil
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params["path"],
+        $params["domain"],
+        $params["secure"],
+        $params["httponly"]
+    );
 }
 
-// Destroy the session
+// Oturumu sonlandır
 session_destroy();
 
-// Redirect to login page
-header('Location: login.php');
+// Yönlendirme
+header("Location: login.php?msg=logout");
 exit;
 ?>

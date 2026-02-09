@@ -1,0 +1,32 @@
+# Güvenlik ve Yönlendirme Kuralları
+
+# Dizin listelemeyi kapat
+Options -Indexes
+
+# Hata sayfaları
+ErrorDocument 404 /lonely_eye/404.php
+ErrorDocument 403 /lonely_eye/404.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # HTTPS'e zorla (opsiyonel, localhost'ta kapalı kalabilir)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Dosya uzantılarını gizle (örn: profile.php -> profile)
+    # RewriteCond %{REQUEST_FILENAME} !-d
+    # RewriteCond %{REQUEST_FILENAME}.php -f
+    # RewriteRule ^([^\.]+)$ $1.php [NC,L]
+</IfModule>
+
+# Hassas dosyalara erişimi engelle
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|readme\.md|license\.txt)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
