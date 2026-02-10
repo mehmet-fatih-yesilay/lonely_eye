@@ -1,104 +1,95 @@
-# Lonely Eye - Dijital Otağ & Kitap Sosyal Ağı
+# Lonely Eye - Modern Kitap Sosyal Ağı
 
-![Lonely Eye Banner](https://placehold.co/1200x400/121212/FF0000?text=Lonely+Eye:+Digital+Otağ)
+![Lonely Eye Banner](https://placehold.co/1200x400/121212/FF0000?text=Lonely+Eye)
 
-> **"Bilgiye açılan dijital bir kapı, modern bir otağ."**
+> **"Kitapların dünyasında yeni bir keşif yolculuğu."**
 
-Lonely Eye, kitap severleri bir araya getiren, modern ve estetik bir **Kitap Sosyal Ağı** projesidir. Kullanıcıların kütüphanelerini oluşturabileceği, kitaplar hakkında tartışabileceği, yeni eserler keşfedebileceği ve diğer okurlarla etkileşime girebileceği kapsamlı bir platformdur.
+Lonely Eye, kitap severleri bir araya getiren, modern, şık ve kullanıcı dostu bir **Kitap Sosyal Ağı** projesidir. Kullanıcıların kütüphanelerini dijital ortamda yönetebileceği, kitaplar hakkında derinlemesine tartışabileceği, yeni eserler keşfedebileceği ve diğer okurlarla etkileşime girebileceği kapsamlı bir platformdur.
 
-Proje, **"Dijital Otağ"** vizyonuyla geliştirilmiş olup, Türk kültürünün derinliğini modern web teknolojileri ve **"Clean Dark & Vibrant Accents"** tasarım diliyle birleştirir.
+Arayüz tasarımında **"Clean Dark & Vibrant Accents"** (Temiz Karanlık & Canlı Vurgular) felsefesi benimsenmiştir. Bu sayede içerik ön plana çıkarılırken, göz yormayan ve premium bir kullanıcı deneyimi sunulur.
 
 ## 🌟 Öne Çıkan Özellikler
 
-### 📚 Geniş Kütüphane & Keşif
-- **Zengin Veritabanı:** Binlerce kitap ve dergi içeren yerel veritabanı.
-- **Google Books Entegrasyonu:** Dünya çapındaki tüm kitaplara erişim sağlayan arama motoru.
-- **Sonsuz Kaydırma (Infinite Scroll):** Kesintisiz bir keşif deneyimi.
-- **Detaylı Filtreleme:** Tür, yazar ve dile göre gelişmiş arama seçenekleri.
+### 📚 Geniş Kütüphane & Sınırsız Keşif
+- **Hibrit Veritabanı:** Hem yerel veritabanındaki binlerce kitap hem de **Google Books API** entegrasyonu ile dünyadaki milyonlarca kitaba anında erişim.
+- **Sonsuz Kaydırma (Infinite Scroll):** Kesintisiz ve akıcı bir kitap keşif deneyimi.
+- **Gelişmiş Filtreleme:** Tür, yazar, dil ve diğer kriterlere göre detaylı arama seçenekleri.
 
-### 👤 Sosyal Etkileşim
-- **Kullanıcı Profilleri:** Okuma geçmişi, favoriler ve kişisel biyografi.
-- **Takip Sistemi:** Diğer okurları takip etme ve etkileşimde bulunma.
-- **Mesajlaşma:** Kullanıcılar arası özel mesajlaşma (DM) sistemi.
-- **Yorumlar ve Tartışmalar:** Kitaplara detaylı incelemeler yazma ve diğer yorumlara yanıt verme (Instagram tarzı alt yorumlar).
+### 👤 Sosyal Etkileşim & Topluluk
+- **Kullanıcı Profilleri:** Okuma listeleri, favoriler, biyografi ve takipçi/takip edilen istatistikleri.
+- **Etkileşim:** Diğer kullanıcıları takip etme, kitap zevklerine göre yeni insanlarla tanışma.
+- **Mesajlaşma (DM):** Kullanıcılar arası anlık ve özel mesajlaşma sistemi.
+- **İnceleme & Tartışma:** Kitaplara puan verme, detaylı incelemeler yazma ve yorumlara yanıt vererek (thread yapısı) tartışmalara katılma.
 
-### 🎨 Modern & Premium Tasarım
-- **Clean Dark Tema:** Göz yormayan, premium karanlık mod (`#121212`).
+### 🎨 Modern Tasarım Dili
+- **Clean Dark Tema:** Arka planda `#121212` ve yüzeylerde `#1E1E1E` tonları ile derinlikli, göz yormayan bir karanlık mod.
 - **Canlı Aksan Renkler:** 
-  - **Kırmızı (#FF0000):** Başlıklar ve vurgular.
-  - **Bebek Mavisi (#40C4FF) & Derin Mavi (#0000FF):** Logo ve marka kimliği.
-  - **Mor (#9D00FF):** Butonlar ve etkileşimli öğeler.
-  - **Turuncu (#FF4500):** Footer vurguları.
-- **Responsive Arayüz:** Mobil ve masaüstü uyumlu, akıcı tasarım.
+  - **Kırmızı (#FF0000):** Önemli başlıklar ve vurgular.
+  - **Bebek Mavisi (#40C4FF) & Derin Mavi (#0000FF):** Marka kimliği ve logolar.
+  - **Mor (#9D00FF):** Butonlar ve etkileşim çağrıları (CTA).
+  - **Turuncu (#FF4500):** Footer alanı ve belirli uyarılar.
+- **Responsive & Akıcı:** Mobil, tablet ve masaüstü cihazlarda kusursuz çalışan, yüksek performanslı arayüz.
 
-### 🛠 Yönetim Paneli
-- **Admin Dashboard:** Kullanıcıları, kitapları ve içerikleri yönetmek için gelişmiş panel.
-- **İstatistikler:** Platform kullanımı hakkında detaylı veriler.
+### 🛠 Yönetim & Altyapı
+- **Admin Paneli:** İçerik, kullanıcı ve sistem yönetimi için kapsamlı dashboard.
+- **Güvenli Altyapı:** Modern PHP ve SQL pratikleri ile güvenli veri yönetimi.
 
 ## 🚀 Kurulum (Localhost)
 
-Bu projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyin:
+Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyebilirsiniz:
 
 ### Gereksinimler
-- **XAMPP** (veya muadili PHP/MySQL sunucusu)
-- **Git**
+- **Web Sunucusu:** XAMPP, WAMP veya benzeri (Apache + PHP + MySQL).
+- **Git:** Sürüm kontrolü için.
 
-### Adım Adım Kurulum
+### Kurulum Adımları
 
-1. **Projeyi Klonlayın:**
-   Terminalinizi açın ve `htdocs` klasörünüze gidin:
+1. **Depoyu Klonlayın:**
+   Web sunucunuzun kök dizinine (örneğin `htdocs`) gidin ve terminalde şu komutu çalıştırın:
    ```bash
-   cd c:\xampp\htdocs
    git clone https://github.com/KULLANICI_ADINIZ/lonely_eye.git
    ```
 
-2. **Veritabanını İçe Aktarın:**
-   - `http://localhost/phpmyadmin` adresine gidin.
-   - Yeni bir veritabanı oluşturun: `lonely_eye`
-   - `lonely_eye` klasöründeki `database.sql` dosyasını bu veritabanına **İçe Aktar (Import)** sekmesinden yükleyin.
+2. **Veritabanını Hazırlayın:**
+   - `phpMyAdmin` veya tercih ettiğiniz veritabanı yönetim aracını açın.
+   - `lonely_eye` adında yeni bir veritabanı oluşturun (Character set: `utf8mb4_general_ci`).
+   - Proje ana dizinindeki `database.sql` dosyasını bu veritabanına **içe aktarın (import)**.
 
-3. **Veritabanı Ayarlarını Kontrol Edin:**
-   `includes/db.php` dosyasını açın ve veritabanı bağlantı bilgilerinizin doğru olduğundan emin olun (Genellikle XAMPP varsayılanları şöyledir):
+3. **Bağlantı Ayarlarını Yapılandırın:**
+   `includes/db.php` dosyasını açın ve veritabanı kimlik bilgilerinizi kontrol edin (Gerekirse düzenleyin):
    ```php
-   // includes/db.php
    define('DB_HOST', 'localhost');
    define('DB_NAME', 'lonely_eye');
-   define('DB_USER', 'root');
-   define('DB_PASS', '');
-   define('DB_CHARSET', 'utf8mb4');
+   define('DB_USER', 'root'); // Varsayılan: root
+   define('DB_PASS', '');     // Varsayılan: boş
    ```
 
-4. **Projeyi Başlatın:**
-   Tarayıcınızda şu adrese gidin:
-   `http://localhost/lonely_eye`
+4. **Projeyi Çalıştırın:**
+   Tarayıcınızı açın ve `http://localhost/lonely_eye` adresine gidin.
 
 ## 📂 Proje Yapısı
 
-```
-lonely_eye/
-├── admin/          # Yönetim paneli dosyaları
-├── api/            # AJAX istekleri için backend API'leri
-├── assets/         # CSS, JS, Resim dosyaları
-├── includes/       # Veritabanı bağlantısı, header, footer vb.
-├── uploads/        # Kullanıcı yüklemeleri (avatar, kapak fotosu)
-├── index.php       # Ana sayfa
-├── dashboard.php   # Kullanıcı akış sayfası
-├── profile.php     # Profil sayfası
-├── library.php     # Kütüphane ve arama
-└── database.sql    # Veritabanı şeması
-```
+- **`/admin`**: Yönetim paneli sayfaları.
+- **`/api`**: AJAX isteklerini karşılayan backend servisleri.
+- **`/assets`**: CSS, JavaScript ve görsel dosyalar.
+- **`/includes`**: Tekrar kullanılan PHP parçaları (header, footer, db bağlantısı vb.).
+- **`index.php`**: Karşılama sayfası (Landing page).
+- **`dashboard.php`**: Kullanıcı ana akış sayfası.
+- **`profile.php`**: Kullanıcı profil sayfası.
+- **`library.php`**: Kitap arama ve listeleme sayfası.
 
 ## 🤝 Katkıda Bulunma
 
-1. Bu depoyu (repository) Fork'layın.
-2. Yeni bir özellik dalı (feature branch) oluşturun (`git checkout -b ozellik/YeniOzellik`).
-3. Değişikliklerinizi kaydedin (`git commit -m 'Yeni özellik eklendi'`).
-4. Dalınızı Push'layın (`git push origin ozellik/YeniOzellik`).
-5. Bir Pull Request oluşturun.
+Katkılarınız bizim için değerlidir! 
+1. Bu projeyi **Fork** edin.
+2. Yeni bir **Branch** oluşturun (`git checkout -b feature/YeniOzellik`).
+3. Değişikliklerinizi **Commit** edin (`git commit -m 'Yeni özellik: X eklendi'`).
+4. Branch'inizi **Push** edin (`git push origin feature/YeniOzellik`).
+5. Bir **Pull Request (PR)** açın.
 
 ## 📝 Lisans
 
-Bu proje **MIT Lisansı** ile lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakınız.
+Bu proje **MIT Lisansı** altında sunulmaktadır.
 
 ---
-**Lonely Eye** - *Gözler Kalbin Aynasıdır, Kitaplar İse Ruhun.*
+**Lonely Eye** - *Okumanın en sosyal hali.*
